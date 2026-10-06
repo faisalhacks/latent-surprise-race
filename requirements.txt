@@ -1,0 +1,8 @@
+numpy>=1.26,<3
+scipy>=1.11
+matplotlib>=3.8
+pytest>=8.0
+# GPU path (Phase 2); not needed for the CPU harness validation
+torch>=2.4
+transformers==4.57.3
+modal>=1.5

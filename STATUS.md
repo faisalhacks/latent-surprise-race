@@ -1,4 +1,25 @@
-# Status: 2026-10-06
+# Status: 2026-10-07
+
+## Summary
+
+The harness, the benchmark, the adapter contract and the manuscript are
+complete and tested (39 tests). Two things remain outstanding, one of which
+needs you:
+
+1. **The registered GPU run is still blocked** on a Modal payment method. See
+   "Where this stands" below. Nothing in the code is waiting on anything else.
+2. **A CPU pilot at 128 px is running** (`scripts/run_pilot_cpu.py`), to answer
+   whether the paid run is worth running and in what form. It is not the
+   registered experiment and its output is labelled as a pilot everywhere it
+   appears.
+
+The paper compiles today with visible PENDING placeholders. The moment either
+run is analysed, `python scripts/make_paper.py && cd paper && tectonic main.tex`
+fills in every table, figure and numeric sentence.
+
+---
+
+# Original status: 2026-10-06
 
 ## Where this stands
 

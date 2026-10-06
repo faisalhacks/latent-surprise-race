@@ -63,6 +63,29 @@ relative error in `z` is amplified. This is why precision is measured
 (`modal run modal_app.py --precision-check-only`) instead of assumed, and why
 fp32 with TF32 matmuls is the default despite costing throughput.
 
+## The occlusion condition tests object permanence, not partial occlusion
+
+The frozen specification asks for a static black square of 30% frame area
+positioned to intersect the disc's path, described as "partially blocking" it.
+A 35x35 square anchored on the trajectory of a 10-pixel disc does no such thing.
+Measured across all 250 clips of the condition (3750 post-injection frames):
+
+| | |
+|---|---|
+| frames with the disc **completely** hidden | 77.5% |
+| frames with the disc partially hidden | 17.2% |
+| frames with the disc fully visible | 5.3% |
+| clips where the disc is never visible again | 28.0% |
+
+So this condition asks whether the representation registers that a tracked
+object has **vanished**, which is a question about object permanence, not about
+robustness to partial visual corruption. It follows directly from the
+registered specification and is not a defect, but the paper reports it this way
+rather than repeating the specification's wording, because the two describe
+different experiments. A genuine partial-occlusion condition would need the
+occluder sized or placed to guarantee partial overlap, and is a sensible
+addition for a future revision rather than a change to a frozen condition.
+
 ## Two risks measured on real weights (n = 2 clips, 2026-10-06)
 
 `scripts/smoke_real_cpu.py` ran the real pretrained ViT-L over one

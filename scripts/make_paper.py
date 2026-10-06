@@ -48,6 +48,35 @@ COND_PRETTY = {
 }
 
 
+def gget(d: dict, key: str, default):
+    """Tolerate result JSONs written by an older version of the analysis.
+
+    A reusable artefact gets pointed at old runs; crashing on a missing
+    diagnostic key would be a poor reason to lose a result.
+    """
+    v = d.get(key, default)
+    return default if v is None else v
+
+
+def lift_of(rec: dict) -> float:
+    """Lift, recomputed if the stored diagnostic predates it.
+
+    Never default a missing diagnostic to a benign value: an absent key means
+    'not recorded', and silently turning that into 'passed the check' would let
+    the generated prose assert something it has not verified.
+    """
+    if rec.get("lift_over_fpr") is not None:
+        return float(rec["lift_over_fpr"])
+    return float(rec["detection_rate"]) - float(rec["clip_fpr_control_eval"])
+
+
+def at_chance_baselines(gate: dict, per_monitor: dict) -> list:
+    stored = gate.get("baselines_firing_at_chance")
+    if stored is not None:
+        return list(stored)
+    return [b for b in C.BASELINES if lift_of(per_monitor[b]) < 0.05]
+
+
 def esc(s: str) -> str:
     for a, b in (("\\", r"\textbackslash{}"), ("_", r"\_"), ("&", r"\&"),
                  ("%", r"\%"), ("#", r"\#"), ("$", r"\$")):
@@ -104,12 +133,12 @@ def table_tta(g: dict) -> str:
     for m in C.MONITORS:
         d = g["per_monitor"][m]
         lo, hi = d["rmta_ci95"]
-        flag = r"\,$\dagger$" if d["fires_at_chance"] else ""
+        flag = r"\,$\dagger$" if lift_of(d) < 0.05 else ""
         L.append(r"{} & {:.1f} & {:.2f} & [{:.2f}, {:.2f}] & {:.3f} & {:.3f} & "
                  r"{:+.3f}{} \\".format(PRETTY[m], d["median_dt"], d["rmta"],
                                         lo, hi, d["detection_rate"],
                                         d["clip_fpr_control_eval"],
-                                        d["lift_over_fpr"], flag))
+                                        lift_of(d), flag))
         if m == "loss_L1":
             L.append(r"\midrule")
     L += [r"\bottomrule", r"\end{tabular}"]
@@ -181,11 +210,11 @@ def findings(r: dict) -> str:
             r"\texttt{{{}}} alarmed on {:.1%} of anomalous clips against a "
             r"held-out clip-level false-alarm rate of {:.1%} (lift {:+.3f})"
             .format(esc(b), d["detection_rate"], d["clip_fpr_control_eval"],
-                    d["lift_over_fpr"]).replace("%", r"\%"))
+                    lift_of(d)).replace("%", r"\%"))
     S.append("At the pre-registered operating point, " + "; ".join(base_lines)
              + ".")
 
-    at_chance = gate["baselines_firing_at_chance"]
+    at_chance = at_chance_baselines(gate, pm)
     if at_chance:
         S.append(
             r"\textbf{{Baseline(s) {} do not detect anomalies above their own "
@@ -231,7 +260,7 @@ def findings(r: dict) -> str:
         S.append("No probe satisfies the frozen Early Warner criterion "
                  "(a median gain of at least one frame against both baselines "
                  "at Holm-adjusted $p<0.01$).")
-    if gate["verdict_is_vacuous"]:
+    if gget(gate, "verdict_is_vacuous", False):
         S.append(r"\textbf{This PROCEED verdict is vacuous} and must not be "
                  r"used to advance to Phase 4: the probe cleared the gate only "
                  r"against a baseline that fires at chance.")
@@ -288,9 +317,9 @@ def main() -> None:
             "yes" if gate["primary_median_degenerate"] else "no"),
         r"\newcommand{\lgwBaselinesAtChance}{%s}" % (
             ", ".join(r"\texttt{" + esc(b) + "}"
-                      for b in gate["baselines_firing_at_chance"]) or "none"),
+                      for b in at_chance_baselines(gate, g["per_monitor"])) or "none"),
         r"\newcommand{\lgwVacuous}{%s}" % (
-            "yes" if gate["verdict_is_vacuous"] else "no"),
+            "yes" if gget(gate, "verdict_is_vacuous", False) else "no"),
         r"\newcommand{\lgwSource}{\texttt{%s}}" % esc(
             os.path.relpath(path, ROOT).replace("\\", "/")),
         r"\newcommand{\lgwNote}{%s}" % esc(str(r.get("note", ""))),
@@ -310,7 +339,7 @@ def main() -> None:
         os.path.relpath(path, ROOT)))
     print("  verdict={}  early warners={}  vacuous={}".format(
         gate["verdict"], gate["early_warners"] or "none",
-        gate["verdict_is_vacuous"]))
+        gget(gate, "verdict_is_vacuous", False)))
 
 
 if __name__ == "__main__":

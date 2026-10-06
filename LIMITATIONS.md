@@ -63,6 +63,50 @@ relative error in `z` is amplified. This is why precision is measured
 (`modal run modal_app.py --precision-check-only`) instead of assumed, and why
 fp32 with TF32 matmuls is the default despite costing throughput.
 
+## Two risks measured on real weights (n = 2 clips, 2026-10-06)
+
+`scripts/smoke_real_cpu.py` ran the real pretrained ViT-L over one
+`gravity_flip` clip and one control. It is a correctness check, far too small
+for inference, but it exposes two threats to the experiment's power that are
+visible from score *magnitudes* alone - no Time-to-Alarm, no gate outcome, and
+nothing about the direction of H1.
+
+**1. `loss_L0` has almost no dynamic range.** Observed 7.57 to 7.94 across both
+clips and all scored frames: about +/-2% around 7.75. The loss is an MSE averaged
+over 256 tokens x 1024 dimensions, and these anomalies are spatially local, so
+the average dilutes the signal heavily. If this holds at n = 1200, L0's 99th
+percentile sits inside its own noise and it will alarm at roughly its
+false-alarm rate, i.e. at chance.
+
+*Why this matters more than it looks:* beating a baseline that detects nothing
+is not evidence that geometry warns earlier. It only shows the baseline is
+insensitive at this operating point. The analysis therefore reports a **lift**
+column (detection rate minus held-out clip false-alarm rate) for every monitor,
+flags any baseline whose lift is below 0.05, and marks a PROCEED verdict
+**vacuous** if the probe that cleared the gate only beat such a baseline. This
+is a diagnostic, not a change to any hypothesis test.
+
+*Possible remedies, none applied:* a max over tokens rather than a mean; a
+per-token loss restricted to the tokens whose content actually changed; or
+reporting L1 as the primary baseline, since it is information-matched and showed
+a wider range.
+
+**2. Probes A and C have between-clip offsets comparable to their within-clip
+variation.** Probe C read ~191 on one clip and ~206 on the other, while moving
+only ~3 units across the scored frames *within* each clip. Thresholds are
+pooled across control clips, so a per-clip offset of that size means detection
+is driven largely by which clips happen to sit high, not by the anomaly - a
+change detector behaving like a per-clip constant. Probe B, which is
+scale-invariant by construction, showed no comparable offset.
+
+The standard fix is to standardise each probe per clip against its own
+pre-injection frames. That cannot be applied uniformly here: probe C is
+undefined before frame 15, so it has no within-clip pre-injection sample, and
+`Sigma_base` would have to serve as the reference instead. This is a genuine
+design question rather than a bug, it postdates the freeze, and it is left as a
+decision rather than silently patched. **If the real run shows probes A and C
+near chance while B does not, this is the first thing to test.**
+
 ## Generalisation
 
 **One architecture, one synthetic domain.** Phase 2 establishes the phenomenon

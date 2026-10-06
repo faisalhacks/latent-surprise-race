@@ -79,6 +79,19 @@ def _run_regime(anom: dict, calib: dict, ev: dict, conds: np.ndarray,
         rec["rmta_ci95"] = S.rmta_bootstrap_ci(dt, e, n_boot=N_BOOT)
         rec["clip_fpr_control_eval"] = S.clip_false_alarm_rate(ev[m], thresholds[m])
         rec["clip_fpr_control_calib"] = S.clip_false_alarm_rate(calib[m], thresholds[m])
+        # Lift is the only thing that says a monitor detects anything at all.
+        # A monitor whose detection rate equals its false-alarm rate is firing
+        # at chance, and "beating" it carries no evidence about H1.
+        rec["lift_over_fpr"] = rec["detection_rate"] - rec["clip_fpr_control_eval"]
+        rec["fires_at_chance"] = bool(rec["lift_over_fpr"] < 0.05)
+        # dynamic range of the raw score inside the evaluation window
+        v = np.asarray(anom[m], dtype=np.float64)[:, C.EVAL_START:C.EVAL_END]
+        v = v[np.isfinite(v)]
+        med = float(np.median(v)) if v.size else float("nan")
+        rec["score_median"] = med
+        rec["score_iqr_over_median"] = (
+            float((np.percentile(v, 75) - np.percentile(v, 25)) / abs(med))
+            if v.size and med != 0 else float("nan"))
         rec["by_condition"] = {
             c: dict(S.summarise(dt[conds == c], e[conds == c]),
                     rmta=S.rmta(dt[conds == c], e[conds == c]))
@@ -139,6 +152,8 @@ def _run_regime(anom: dict, calib: dict, ev: dict, conds: np.ndarray,
         "early_warners_rmta": rmta_warners,
         "median_degenerate": all(
             per_monitor[m]["median_dt"] >= C.CENSOR_DT for m in C.MONITORS),
+        "baselines_firing_at_chance": [
+            b for b in C.BASELINES if per_monitor[b]["fires_at_chance"]],
     }
 
 
@@ -170,6 +185,9 @@ def analyse(scores: dict, out_dir: str, model_name: str, note: str = "") -> dict
                           "Holm-adjusted one-sided p < {}".format(
                               C.MIN_MEDIAN_GAIN, C.ALPHA)),
             "primary_median_degenerate": primary["median_degenerate"],
+            "baselines_firing_at_chance": primary["baselines_firing_at_chance"],
+            "verdict_is_vacuous": bool(primary["early_warners_median"]
+                                       and primary["baselines_firing_at_chance"]),
             "secondary_rmta_early_warners": primary["early_warners_rmta"],
             "clip_matched_median_early_warners":
                 regimes["clip_matched_5pct"]["early_warners_median"],
@@ -199,13 +217,26 @@ def _write_report(r: dict, out_dir: str) -> None:
 
         L.append("### Time-to-Alarm per monitor\n")
         L.append("| monitor | median dt | RMTA | RMTA 95% CI | detection rate "
-                 "| clip FPR (held-out) | threshold |")
-        L.append("|---|---|---|---|---|---|---|")
+                 "| clip FPR (held-out) | lift | IQR/median | threshold |")
+        L.append("|---|---|---|---|---|---|---|---|---|")
         for m in C.MONITORS:
             d = g["per_monitor"][m]
-            L.append("| `{}` | {:.1f} | {:.2f} | [{:.2f}, {:.2f}] | {:.3f} | {:.3f} | {:.4g} |".format(
-                m, d["median_dt"], d["rmta"], d["rmta_ci95"][0], d["rmta_ci95"][1],
-                d["detection_rate"], d["clip_fpr_control_eval"], d["threshold"]))
+            L.append("| `{}` | {:.1f} | {:.2f} | [{:.2f}, {:.2f}] | {:.3f} | {:.3f} "
+                     "| {:+.3f}{} | {:.3f} | {:.4g} |".format(
+                         m, d["median_dt"], d["rmta"], d["rmta_ci95"][0],
+                         d["rmta_ci95"][1], d["detection_rate"],
+                         d["clip_fpr_control_eval"], d["lift_over_fpr"],
+                         " **!**" if d["fires_at_chance"] else "",
+                         d["score_iqr_over_median"], d["threshold"]))
+        if g["baselines_firing_at_chance"]:
+            L.append("\n> **Baseline(s) {} fire at chance** (detection rate within "
+                     "0.05 of their own false-alarm rate). A probe that beats a "
+                     "baseline which detects nothing provides **no evidence for "
+                     "H1** - it only shows the baseline is insensitive at this "
+                     "operating point. Any 'geometry warns earlier' claim resting "
+                     "on such a comparison must be reported as vacuous.\n".format(
+                         ", ".join("`" + b + "`" for b in
+                                   g["baselines_firing_at_chance"])))
         if g["median_degenerate"]:
             L.append("\n> **Median is degenerate in this regime** (every monitor is "
                      "right-censored at the median, i.e. detection rate < 50%). "
@@ -246,6 +277,13 @@ def _write_report(r: dict, out_dir: str) -> None:
              "BOTH baselines AND Holm-adjusted p < 0.01. The `Holm signif.` "
              "column above reports only the second half of that test.")
     L.append("- Primary median degenerate: {}".format(g["primary_median_degenerate"]))
+    L.append("- Baselines firing at chance: {}".format(
+        g["baselines_firing_at_chance"] or "none"))
+    if g["verdict_is_vacuous"]:
+        L.append("\n> **WARNING: this PROCEED verdict is vacuous.** A probe cleared "
+                 "the gate, but at least one baseline it beat does not detect "
+                 "anomalies above its own false-alarm rate. Do not advance to "
+                 "Phase 4 on this basis.")
     L.append("\nSecondary evidence (reported, does not decide the gate):\n")
     L.append("- RMTA early warners, per-frame-matched: {}".format(
         g["secondary_rmta_early_warners"] or "none"))

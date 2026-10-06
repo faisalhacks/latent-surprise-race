@@ -91,6 +91,37 @@ Phase 4 (cross-architecture, MuJoCo, mechanistic probing). The protocol gates it
 on the Phase 3 verdict and requires explicit approval before spending compute on
 it, so it stays unwritten until Phase 2 produces a verdict.
 
+## Real weights now run end to end (CPU, 2 clips)
+
+`scripts/smoke_real_cpu.py` confirmed the full path against the **real**
+pretrained ViT-L, not just the architecture: `D = 1024`, 2048 tokens per window,
+every monitor finite, 1190 s for 2 clips. The predictor and the L0 loss behave.
+
+It also surfaced two power risks, detailed in `LIMITATIONS.md`:
+
+* **`loss_L0` spans only +/-2%** (7.57 to 7.94). An MSE averaged over
+  256 x 1024 values dilutes a spatially local anomaly. If that holds at scale,
+  L0 alarms at chance - and beating a baseline that detects nothing is **not**
+  evidence for H1. The report now carries a `lift` column, flags such baselines,
+  and marks a PROCEED verdict `verdict_is_vacuous` in that case.
+* **Probes A and C vary more between clips than within one** (probe C: ~191 vs
+  ~206 across two clips, but only ~3 units of movement inside each). With
+  pooled thresholds, that makes them partly per-clip constants rather than
+  change detectors. Probe B, scale-invariant, does not show this.
+
+Neither is patched. Both postdate the freeze, and the second is a design
+decision rather than a bug - see the open question below.
+
+## Open question for you
+
+If the real run shows probes A and C near chance while B is not, the fix is to
+standardise each probe per clip against its own pre-injection frames. Probe C is
+undefined before frame 15, so it has no within-clip reference and `Sigma_base`
+would have to serve instead. That is a change to a frozen probe definition, so
+it is your call, not mine: either report A and C as specified and note the
+weakness, or add a per-clip-standardised variant as a clearly-labelled
+post-freeze robustness analysis.
+
 ## One thing to expect from the verdict
 
 The orchestration dry run reported `primary median degenerate: True`. That is an

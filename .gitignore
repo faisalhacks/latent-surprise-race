@@ -3,3 +3,9 @@ __pycache__/
 data/
 results/
 .pytest_cache/
+paper/main.pdf
+paper/main.log
+paper/main.blg
+paper/main.aux
+paper/main.out
+paper/main.bbl

@@ -1,0 +1,98 @@
+\section{Results}
+\label{sec:results}
+
+\ifnum\lgwHasResults=0
+\textit{No inference run has been analysed. Every table and number below is a
+generated placeholder; see the note on the title page.}
+\else
+Run: \lgwModel, $n_{\text{anom}} = \lgwNAnom$, $d = \lgwDim$. Source:
+\lgwSource. \lgwNote
+\fi
+
+\input{generated/findings}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_tta}
+\caption{Time-to-alarm per monitor at the pre-registered operating point
+(per-frame false-alarm rate matched at $1\%$). \emph{Lift} is detection rate
+minus held-out clip-level false-alarm rate; $\dagger$ marks a monitor firing at
+chance. RMTA is the restricted mean time-to-alarm in frames, lower being
+earlier, with a percentile bootstrap interval.}
+\label{tab:tta}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_cmp}
+\caption{Paired probe-versus-baseline comparisons. Positive gain means the
+probe alarms earlier. $p$ values are Holm-adjusted across all six comparisons;
+the RMTA column uses the paired cluster bootstrap. A probe is an Early Warner
+only if it achieves a median gain of at least one frame against \emph{both}
+baselines at adjusted $p<0.01$.}
+\label{tab:cmp}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\IfFileExists{generated/fig_survival.png}{%
+  \includegraphics[width=\linewidth]{generated/fig_survival.png}}{%
+  \fbox{\parbox{0.8\linewidth}{\centering\vspace{18pt}\textsc{pending}\\[2pt]
+  \footnotesize survival curves are produced by the analysis run\vspace{18pt}}}}
+\caption{Kaplan--Meier curves for time-to-detection under both threshold
+regimes: the probability that an anomaly remains undetected $\dt$ frames after
+injection. A monitor that warns earlier drops sooner. Curves that stay flat
+near $1$ indicate a monitor that mostly fails to fire inside the window, which
+is the regime in which the median is uninformative.}
+\label{fig:survival}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_cond}
+\caption{RMTA by anomaly condition (frames; lower is earlier). Conditions
+differ in disturbance magnitude, so these are not comparable across columns ---
+they show \emph{where} any effect is concentrated, not which anomaly is
+``easier''.}
+\label{tab:cond}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_secondary}
+\caption{The secondary operating point: thresholds re-derived so the
+clip-level false-alarm rate on calibration controls is $5\%$. Registered before
+any inference run and reported unconditionally.}
+\label{tab:secondary}
+\end{table}
+
+\subsection{Reading these tables honestly}
+
+Three questions should be asked of Table~\ref{tab:tta} before
+Table~\ref{tab:cmp} is read at all.
+
+\emph{Do the baselines detect anything?} If a baseline's lift is near zero it
+fires at chance, and every comparison against it in Table~\ref{tab:cmp} is
+uninformative about the hypothesis regardless of its $p$ value. The
+$\dagger$ marker and the \textsc{vacuous} flag exist for this case.
+
+\emph{Is the median degenerate?} If detection rates are below $50\%$, the median
+$\dt$ column will read identically for every monitor and the median-gain column
+of Table~\ref{tab:cmp} will be all zeros. That is an artefact of censoring, not
+evidence of equality; the RMTA columns are the ones carrying information.
+
+\emph{Does the conclusion survive the second operating point?} A result that
+appears at a $1\%$ per-frame threshold and vanishes at a $5\%$ clip-level
+threshold is an operating-point artefact, not a property of the
+representation.
+
+\subsection{Gate}
+
+The frozen decision rule returns \textbf{\lgwVerdict}. Early warners under the
+registered primary: \lgwEarlyWarners. Under the censoring-robust secondary:
+\lgwRmtaWarners. Median degenerate: \lgwMedianDegenerate. Baselines firing at
+chance: \lgwBaselinesAtChance. Verdict vacuous: \lgwVacuous.

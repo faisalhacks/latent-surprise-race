@@ -1,0 +1,96 @@
+\section{Evaluation protocol}
+\label{sec:protocol}
+
+\subsection{Thresholds, and what ``fair'' means here}
+
+Monitors live on incomparable scales --- a Frobenius norm and a cosine distance
+have no common unit --- so comparing their raw scores is meaningless. What can
+be matched is their false-alarm behaviour. For each monitor independently, the
+threshold is the $99$th percentile of that monitor's scores pooled over the
+\emph{control-calibration} clips and the evaluation frames. Every monitor
+therefore raises false alarms on $1\%$ of control frames by construction, and
+differences in time-to-alarm are differences in sensitivity, not in scale.
+
+Control clips are split into disjoint calibration ($n=\lgwNCalib$) and
+evaluation ($n=\lgwNEval$) sets. Thresholds are set on the former and false
+alarms measured on the latter; no threshold ever sees anomalous data.
+
+\paragraph{A second operating point.}
+Matching the \emph{per-frame} rate at $1\%$ compounds to roughly $14\%$ over a
+$15$-frame episode, which no episode-level monitor could use. We therefore
+repeat the entire analysis with thresholds re-derived so the \emph{clip-level}
+false-alarm rate on calibration controls is $5\%$. This was fixed before any
+inference run, and both regimes are reported unconditionally, so neither can be
+selected after the fact.
+
+\subsection{Time-to-alarm as a survival quantity}
+
+An alarm fires at the first evaluation frame whose score exceeds the threshold.
+With injection at $t^\star = 15$ and an evaluation window of frames
+$15..29$, time-to-alarm is $\dt = t_{\text{alarm}} - 15 \in \{0,\dots,14\}$. A
+clip that never alarms is \textbf{right-censored} at $14$: its latency is not
+$14$, it is unobserved and at least $14$.
+
+This censoring is the reason the protocol's headline metric needs a companion.
+Once fewer than half the clips alarm, the median $\dt$ equals the censoring
+value for \emph{every} monitor, and the pre-registered comparison returns ``no
+difference'' no matter how large the true effect. We registered the median as
+primary because it was specified in advance, and registered the
+\textbf{restricted mean time-to-alarm}
+\begin{equation}
+\RMTA \;=\; \mathbb{E}\bigl[\min(\dt, 14)\bigr] \;=\; \sum_{u=0}^{13} \widehat S(u),
+\end{equation}
+the area under the Kaplan--Meier curve $\widehat S$, as a secondary that stays
+well defined at any detection rate. Lower is earlier.
+
+\subsection{Tests}
+
+\begin{itemize}
+\item \textbf{Primary (as registered).} Paired Wilcoxon signed-rank on $\dt$,
+probe versus baseline, one-sided (the hypothesis is directional), with censored
+clips entered at $14$ --- conservative, since it understates differences. The
+two-sided $p$ is always reported alongside, so the tail cannot be chosen post
+hoc.
+\item \textbf{Censoring-aware.} Log-rank on the Kaplan--Meier curves. Both arms
+come from the same clips, violating its independence assumption, so it is
+reported as corroborative only.
+\item \textbf{Effect size.} Paired cluster bootstrap on the RMTA difference
+($\lgwNBoot$ resamples, the same resample applied to both monitors so that
+pairing is preserved), giving a confidence interval in frames.
+\item \textbf{Multiplicity.} Holm's step-down correction across all six
+comparisons ($3$ probes $\times$ $2$ baselines), separately for the median and
+RMTA families.
+\end{itemize}
+
+\subsection{The decision gate}
+
+A probe is an \textbf{Early Warner} iff, against \emph{both} baselines, its
+median $\dt$ is at least one frame lower \emph{and} the Holm-adjusted one-sided
+$p$ is below $0.01$. If no probe qualifies, the protocol terminates the
+expansion track and the result is written up as a negative one. The gate is
+evaluated by code, not by reading tables.
+
+\subsection{Guards against a vacuous verdict}
+
+Two checks sit outside the hypothesis tests and exist to stop the gate from
+being believed when it should not be.
+
+\paragraph{Lift.} For every monitor we report
+$\text{lift} = \text{detection rate} - \text{held-out clip false-alarm rate}$.
+A monitor with lift near zero is firing at chance. If a \emph{baseline} fires at
+chance, then beating it carries no information about H1 --- a probe cannot be
+shown to warn \emph{earlier} than a signal that never warns --- and a passing
+verdict is reported as \textsc{vacuous}. This check is not a hypothesis test and
+does not alter any threshold or statistic; it only makes an existing failure
+mode visible.
+
+\paragraph{Causality, tested adversarially.} Claiming that frame $t$ cannot see
+frame $t{+}1$ is cheap; testing it is not. For every registered adapter we take
+a clip, invert every frame after a cut point, and assert that $z_t$,
+$\mathcal{L}_0$ and all three probes are unchanged to floating-point tolerance
+for $t$ at or before the cut. A separate test asserts that the $\mathcal{L}_0$
+\emph{prediction} does not move when only $f_{t-1}$ and $f_t$ change, while
+confirming it does move when $f_{t-2}$ changes --- so the guarantee is not
+vacuously satisfied by a prediction that ignores its input. Probe streams are
+additionally checked for prefix invariance: scores for frames $0..t$ must be
+identical whether or not later frames exist.

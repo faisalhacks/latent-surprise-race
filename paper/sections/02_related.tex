@@ -1,0 +1,56 @@
+\section{Related work}
+
+\paragraph{Predictive world models.}
+Learned models that roll the world forward in a latent space underpin
+model-based control \citep{ha2018world,hafner2020dream}, and the
+joint-embedding predictive architecture (JEPA) family makes the prediction
+explicitly representational rather than pixel-level
+\citep{lecun2022path,assran2023ijepa}. V-JEPA extends this to video by
+predicting masked spatio-temporal features \citep{bardes2024vjepa}, and V-JEPA 2
+scales it to a model intended for understanding, prediction and planning
+\citep{assran2025vjepa2}. We treat V-JEPA 2 as frozen throughout: the question
+is what its representations already encode, not what they could be trained to
+encode.
+
+\paragraph{Prediction error as a surprise signal.}
+Using a model's own predictive loss as an anomaly or novelty signal is long
+established, both as an engineering device and as a model of attention
+\citep{itti2009bayesian}. In deep learning it is the backbone of much
+out-of-distribution detection \citep{hendrycks2017baseline}. Our
+$\mathcal{L}_0$ baseline is deliberately the strongest version of this idea
+available for V-JEPA 2: not a proxy, but the model's own pretraining objective,
+evaluated causally.
+
+\paragraph{Geometry of representations.}
+Comparing internal states by their geometry rather than their values is standard
+in computational neuroscience through representational similarity analysis
+\citep{kriegeskorte2008rsa}, which motivates our probe~B. Curvature of a
+representational trajectory and drift in its local covariance are the other two
+natural second-order summaries, giving probes~A and~C. We are not proposing
+these as novel statistics; the contribution is the protocol that decides whether
+they carry an early signal, under conditions where the answer could come out
+either way.
+
+\paragraph{Time-to-detection and censoring.}
+Detection latency is a survival quantity: some episodes are never detected, so
+their latency is right-censored, and summarising with a plain mean or median
+over observed alarms is biased. We therefore use Kaplan--Meier estimation
+\citep{kaplan1958nonparametric} and the log-rank test
+\citep{mantel1966evaluation}, and --- because the median is degenerate under
+heavy censoring --- a restricted mean time-to-alarm, the detection analogue of
+restricted mean survival time \citep{royston2013restricted}. Paired comparisons
+use the Wilcoxon signed-rank test \citep{wilcoxon1945individual} and a cluster
+bootstrap \citep{efron1979bootstrap}, with Holm's step-down correction across
+all comparisons \citep{holm1979simple}. Survival analysis is unusual in the
+evaluation of anomaly detectors, which more often report AUROC at a fixed
+horizon; we argue it is the right frame whenever the quantity of interest is
+\emph{how early}, not merely \emph{whether}.
+
+\paragraph{Pre-registration in machine learning.}
+Freezing hypotheses, metrics and decision rules before observing data is routine
+in clinical trials and rare in machine learning, where the same data typically
+serves exploration and confirmation. We adopt it here because the hypothesis is
+attractive, the design space is large, and the number of defensible-looking
+analysis choices is more than sufficient to manufacture a positive result by
+accident. Every departure from the frozen protocol is logged with its date and
+provenance (Appendix~\ref{app:prereg}).

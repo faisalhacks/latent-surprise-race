@@ -1,0 +1,35 @@
+\section{Conclusion}
+
+We asked whether the internal geometry of a frozen video world model signals a
+sudden physical or visual disturbance before the model's own prediction error
+does, and we built the experiment so that the answer could come out either way.
+On the registered protocol the gate returns \lgwVerdict.
+
+The methodological point outlasts the specific answer. A comparison between an
+internal signal and an output error is unusually easy to decide in advance
+without noticing: by letting the baseline's context attend to the frames it
+predicts, by calibrating thresholds on the data they are scored against, by
+summarising a censored latency with a statistic that is constant under
+censoring, or by beating a baseline that never fires. We made the first
+structurally impossible and tested it adversarially, the second impossible by
+construction, the third visible through a registered secondary, and the fourth
+visible through a lift check that marks an otherwise-passing verdict vacuous.
+
+None of these guards is sophisticated. What they have in common is that
+omitting any one of them yields a cleaner-looking result, which is why we think
+they belong in the protocol rather than in the discussion. We release the
+harness as a benchmark that another architecture joins in about twenty-five
+lines and is then held to the same contract automatically, so that the next
+claim of this shape can be checked rather than argued.
+
+\section*{Reproducibility statement}
+
+The protocol was frozen before any code was written and is reproduced in
+Appendix~\ref{app:prereg}; every subsequent change is logged with its date and
+the evidence that motivated it. The dataset is generated deterministically from
+a single seed, so none is distributed. Frozen constants are pinned by a test
+that fails if edited. The causality and leakage guarantees are tested, not
+asserted. Every table, figure and numeric sentence in this paper is generated
+from a run's result JSON by a script in the repository; if no run has been
+analysed, the manuscript compiles with visible placeholders rather than
+plausible values.

@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: >-
+  Latent Geometry vs. Prediction Error: a pre-registered, leakage-free
+  early-warning benchmark for video world models
+message: If you use this harness or benchmark, please cite it.
+type: software
+authors:
+  - name: "TODO: add author(s) before release"
+abstract: >-
+  A pre-registered evaluation harness testing whether the internal
+  representation geometry of a frozen video world model signals sudden
+  physical or visual anomalies earlier than the model's own prediction error.
+  Provides a synthetic anomaly benchmark, three online geometry probes, two
+  prediction-error baselines (including the model's own pretraining objective
+  evaluated causally), survival analysis of time-to-detection, and a
+  model-agnostic adapter contract enforced by a parameterised test suite.
+keywords:
+  - world models
+  - anomaly detection
+  - V-JEPA
+  - survival analysis
+  - pre-registration
+  - representation geometry
+license: MIT
+repository-code: "TODO: add repository URL before release"

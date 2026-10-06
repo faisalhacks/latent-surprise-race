@@ -1,0 +1,53 @@
+\section{The harness as the reusable artefact}
+
+The question in this paper is one instance of a template: \emph{does some
+internal signal of a frozen sequence model move before its output error does?}
+Answering it for another architecture, another anomaly family or another probe
+should not require rebuilding the protocol, and if it does, the resulting
+numbers will not be comparable to ours.
+
+\paragraph{What is shared and what is pluggable.}
+The causal loop --- which frames frame $t$ may see, where the context window
+stops, which frames receive a prediction loss --- is identical for every
+architecture and is implemented exactly once. A model supplies two methods:
+
+\begin{quote}
+\code{encode\_window(windows) -> (latent, loss\_target)} \\
+\code{predict\_final\_step(context\_windows) -> prediction}
+\end{quote}
+
+\noindent
+The windows handed to both are already the causal and context windows of
+Section~\ref{sec:method}, so a new adapter cannot accidentally read the future:
+the information boundary is enforced by the caller, not by the contributor's
+discipline. Probes, thresholds, survival statistics, multiplicity correction and
+the gate are then shared verbatim. Adding V-JEPA 2 takes roughly twenty-five
+lines beyond preprocessing; a model with no native prediction head returns
+\code{None} and is scored against $\mathcal{L}_1$ alone.
+
+\paragraph{Contributions are held to the contract automatically.}
+Every registered adapter is run through a parameterised test suite: output
+shapes, the loss window, prefix invariance, the future-inversion causality
+check, and the assertion that the prediction is blind to the frames it predicts
+while still responding to $f_{t-2}$. Registering an adapter without supplying a
+cheap constructor for these tests fails the suite by design, so an architecture
+cannot silently enter the benchmark without being held to the same standard as
+the others. This is what licenses a cross-architecture comparison: the
+difference between two rows is a difference between models, not between
+pipelines.
+
+\paragraph{Reproducibility.}
+The dataset is generated deterministically from a frozen seed, so no data needs
+to be distributed and no version can drift. The frozen constants are pinned by a
+test that fails if any of them is edited. Each run records its own metadata, and
+the analysis emits the full result set --- both threshold regimes, both metric
+families, per-condition breakdowns, false-alarm rates and the gate verdict ---
+in a single JSON from which every table and numeric sentence in this paper is
+regenerated. No number here is transcribed by hand, which removes an entire
+class of silent error between the experiment and the manuscript.
+
+\paragraph{Scope of the claim.}
+We make no claim that these three probes are the best possible geometric
+monitors, nor that this synthetic domain is representative of deployment. The
+reusable part is the protocol that decides such questions without accidentally
+answering them in advance.

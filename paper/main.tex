@@ -1,0 +1,93 @@
+% Does Latent Geometry Warn Before Prediction Error?
+%
+% Build:  tectonic paper/main.tex      (or: pdflatex twice)
+% Numbers: every figure, table and numeric sentence is generated into
+%          paper/generated/ by scripts/make_paper.py. Do not hand-edit them.
+%
+% To target TMLR, drop tmlr.sty next to this file and replace the geometry/
+% font block below with \usepackage{tmlr}. Nothing else needs to change.
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1.15in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{natbib}
+\bibliographystyle{plainnat}
+
+\captionsetup{font=small,labelfont=bf}
+\newcommand{\dt}{\Delta t}
+\newcommand{\RMTA}{\mathrm{RMTA}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+
+\input{generated/macros}
+\input{generated/dataset_macros}
+
+\title{\bfseries Does Latent Geometry Warn Before Prediction Error?\\
+A Pre-Registered, Leakage-Free Test on Video World Models}
+\author{Anonymous Author(s)}
+\date{}
+
+\begin{document}
+\maketitle
+
+\ifnum\lgwHasResults=0
+\begin{center}
+\fcolorbox{red!60!black}{red!5}{\parbox{0.92\linewidth}{\small
+\textbf{DRAFT --- results pending.} No inference run has been analysed yet, so
+every number in this manuscript renders as \textsc{pending}. This is enforced by
+the build: \code{scripts/make\_paper.py} emits placeholders rather than
+plausible-looking values, so the draft cannot be mistaken for a finished
+result. Running the harness repopulates all tables, figures and numeric prose.}}
+\end{center}
+\vspace{0.6em}
+\fi
+
+\begin{abstract}
+A video world model that is about to be surprised might reveal it in the
+\emph{geometry} of its internal states before its prediction error rises. If
+true, that would matter: prediction error is the standard online anomaly signal
+for model-based control, and any earlier signal buys reaction time. We test the
+claim directly on a frozen V-JEPA 2, with a protocol registered before any code
+was written. Three online geometry probes --- trajectory curvature,
+representational distance, and covariance shift --- are compared against two
+prediction-error baselines, one of which is the model's \emph{own} pretraining
+objective evaluated causally. Detection is scored as time-to-alarm under
+survival analysis, with thresholds calibrated on held-out control clips so that
+every monitor is matched on false alarms.
+
+Our contribution is as much the harness as the answer. Getting this comparison
+right turns out to be easy to get wrong in three specific ways, each of which
+silently favours one side: a prediction loss whose context has already attended
+to the frames it predicts; thresholds fitted on the clips they are evaluated on;
+and a censored median that cannot distinguish any two monitors once fewer than
+half the episodes alarm. We make each failure mode structurally impossible or
+visible, and release the result as a model-agnostic benchmark that a new
+architecture joins in roughly twenty-five lines.
+On the registered experiment the verdict is \lgwVerdict, with early warners:
+\lgwEarlyWarners.
+\end{abstract}
+
+\input{sections/01_intro}
+\input{sections/02_related}
+\input{sections/03_method}
+\input{sections/04_protocol}
+\input{sections/05_benchmark}
+\input{sections/06_results}
+\input{sections/07_reuse}
+\input{sections/08_limitations}
+\input{sections/09_conclusion}
+
+\bibliography{refs}
+
+\appendix
+\input{sections/A_prereg}
+
+\end{document}

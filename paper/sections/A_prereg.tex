@@ -1,0 +1,67 @@
+\section{Frozen protocol and change log}
+\label{app:prereg}
+
+\subsection{What was frozen, and when}
+
+The protocol was frozen on 2026-10-06 before any code was written. It fixes:
+the dataset (resolution, length, injection frame, the four anomaly definitions,
+the control split), the five monitors and their closed forms, the threshold
+rule, the time-to-alarm metric, the statistical tests, the multiplicity
+correction, and the decision gate with its termination branch. The full text
+ships with the repository.
+
+\subsection{Contradictions in the source specification, resolved before freezing}
+
+Three requirements could not all hold simultaneously. Each was resolved before
+any code ran and the resolution was itself frozen.
+
+\begin{description}
+\item[Constant velocity versus inverted gravity.] A constant-velocity baseline
+has no gravity to invert. Resolved by giving the baseline a constant downward
+$g_0$ with perfectly elastic collisions, which keeps the dynamics stationary and
+makes $g \to -g_0$ well defined.
+
+\item[Friction with no observable effect.] A restitution change applied only at
+collisions may not manifest before the evaluation window closes, leaving
+time-to-alarm undefined on a substantial fraction of clips. Resolved by applying
+a per-frame drag in addition to the restitution change.
+
+\item[A per-frame latent under a two-frame tubelet.] V-JEPA 2 has no
+representation that is a function of a single frame. Resolved by the sliding
+causal window of Section~\ref{sec:method}, which is a function of $f_{\leq t}$
+and whose final tubelet spans $(t{-}1,t)$.
+\end{description}
+
+\subsection{Changes after freezing}
+
+\paragraph{Before any inference run.}
+\begin{enumerate}
+\item The Wilcoxon tail was fixed as one-sided primary, with the two-sided value
+always reported. The hypothesis is directional, and the tail had to be fixed
+before seeing data.
+\item Two secondary analyses were registered: the restricted mean time-to-alarm
+with a paired cluster bootstrap, and a clip-matched $5\%$ false-alarm-rate
+threshold regime. Both weaknesses follow from the \emph{definition} of the
+primary metric rather than from any observed result --- a censored median is
+degenerate below $50\%$ detection, and $1\%$ per frame compounds to roughly
+$14\%$ per clip over fifteen frames. The primary metric and the gate were not
+changed.
+\item $\mathcal{L}_1$'s scores on calibration clips were specified to come from
+$5$-fold cross-fitting, so that its own threshold is not optimistic.
+\end{enumerate}
+
+\paragraph{After a two-clip correctness check on real weights.}
+The lift column, the at-chance flag and the \textsc{vacuous} marker were added.
+What had been observed at that point was score \emph{magnitude} --- that
+$\mathcal{L}_0$ spanned about $\pm2\%$ --- and not any time-to-alarm, gate
+outcome or effect direction. No threshold, metric, test or gate criterion was
+altered; the addition only makes an existing failure mode visible in the report.
+We record the provenance here rather than omitting it, so that a reader can
+judge the timing for themselves.
+
+\subsection{Falsification}
+
+The hypothesis is falsified if every geometry probe has a median $\dt$ greater
+than or equal to that of $\mathcal{L}_0$, or if no difference reaches
+Holm-adjusted $p<0.01$. The protocol commits in that case to terminating the
+expansion track and reporting the negative result.

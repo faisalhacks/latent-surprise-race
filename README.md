@@ -12,7 +12,7 @@ much a protocol as an experiment.
 
 ```bash
 pip install -r requirements.txt
-make test            # 32 tests, no GPU
+make test            # full suite, no GPU
 make validate        # whole pipeline on CPU, ~30 s
 make paper           # -> paper/main.pdf
 ```

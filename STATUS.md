@@ -3,7 +3,7 @@
 ## Summary
 
 The harness, the benchmark, the adapter contract and the manuscript are
-complete and tested (39 tests). Two things remain outstanding, one of which
+complete and tested. Two things remain outstanding, one of which
 needs you:
 
 1. **The registered GPU run is still blocked** on a Modal payment method. See
@@ -52,7 +52,7 @@ been.
 | Modal orchestration at full 1200-clip scale | `modal run modal_app.py --arch-dryrun` | 48 chunks, 55s wall, report generated |
 | Real ViT-L weights load and run through the adapter | `scripts/bench_cpu.py` | 326M params, 2048 tokens/window |
 
-22 tests pass.
+The full suite passes; run `python -m pytest tests -q` for the current count.
 
 ## What the blocker costs
 

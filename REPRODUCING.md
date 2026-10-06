@@ -8,7 +8,7 @@ bit-identically from the frozen code.
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests -q            # 32 tests, no GPU required, ~20 s
+python -m pytest tests -q            # full suite, no GPU required, ~35 s
 ```
 
 If the tests do not pass, stop. They are the guarantees, not a formality.

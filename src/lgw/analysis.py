@@ -212,8 +212,11 @@ def _write_report(r: dict, out_dir: str) -> None:
                      "Read the RMTA columns, which remain well defined.\n")
 
         L.append("\n### Paired comparisons (probe vs baseline)\n")
+        # NB: the last column is Holm significance ALONE. Being an Early Warner
+        # additionally requires a median gain of >= 1 frame against BOTH
+        # baselines, which is decided in `early_warners_median`, not here.
         L.append("| comparison | median gain | RMTA gain | RMTA 95% CI | p one-sided "
-                 "| p two-sided | p Holm | p Holm (RMTA) | log-rank p | early warner |")
+                 "| p two-sided | p Holm | p Holm (RMTA) | log-rank p | Holm signif. |")
         L.append("|---|---|---|---|---|---|---|---|---|---|")
         for k, c in g["comparisons"].items():
             lo, hi = c["rmta"]["ci95"]
@@ -239,6 +242,9 @@ def _write_report(r: dict, out_dir: str) -> None:
     L.append("- Criterion: {}".format(g["criterion"]))
     L.append("- Early warners (pre-registered primary): {}".format(
         g["early_warners"] or "none"))
+    L.append("\n  *Early Warner* requires BOTH a median gain >= 1 frame against "
+             "BOTH baselines AND Holm-adjusted p < 0.01. The `Holm signif.` "
+             "column above reports only the second half of that test.")
     L.append("- Primary median degenerate: {}".format(g["primary_median_degenerate"]))
     L.append("\nSecondary evidence (reported, does not decide the gate):\n")
     L.append("- RMTA early warners, per-frame-matched: {}".format(

@@ -41,22 +41,46 @@ KEYS = ("Z", "loss_L0", "probe_A", "probe_B", "probe_C")
 
 
 def plan(n_per_cond: int, n_calib: int, n_eval: int):
-    specs = []
-    for ci, cond in enumerate(C.CONDITIONS):
-        base = ci * C.N_PER_CONDITION
-        for j in range(n_per_cond):
-            specs.append(("anomaly", base + j, cond))
-    for j in range(n_calib):
-        specs.append(("control_calib", 1_000_000 + j, None))
-    for j in range(n_eval):
-        specs.append(("control_eval", 2_000_000 + j, None))
-    jobs, by_split = [], {}
-    for split, i, cond in specs:
-        by_split.setdefault(split, []).append((i, cond))
-    for split, items in by_split.items():
+    """Work order: controls first, then anomalies round-robin by condition.
+
+    Two properties matter for a run that may be interrupted:
+      * thresholds come from control clips, so without them nothing can be
+        analysed at all. Controls therefore go first, and any interruption
+        after they finish still leaves a usable (smaller) experiment.
+      * anomalies are interleaved across conditions, so a partial anomaly set
+        is balanced rather than being all of condition one.
+    """
+    jobs = []
+
+    def add(split, items):
         for k in range(0, len(items), CHUNK):
-            jobs.append((split, items[k:k + CHUNK], len(jobs)))
+            jobs.append((split, items[k:k + CHUNK]))
+
+    add("control_calib", [(1_000_000 + j, None) for j in range(n_calib)])
+    add("control_eval", [(2_000_000 + j, None) for j in range(n_eval)])
+
+    interleaved = []
+    for j in range(n_per_cond):
+        for ci, cond in enumerate(C.CONDITIONS):
+            interleaved.append((ci * C.N_PER_CONDITION + j, cond))
+    add("anomaly", interleaved)
     return jobs
+
+
+def completed_clip_ids(split: str) -> set:
+    """Clip ids already on disk for a split, whatever file they live in.
+
+    Resume keys on content, not on filename, so the work order can change
+    between runs without discarding finished clips.
+    """
+    import glob
+    done = set()
+    for f in glob.glob(os.path.join(OUT, "chunks", split + "_*.npz")):
+        try:
+            done.update(int(x) for x in np.load(f, allow_pickle=False)["clip_id"])
+        except Exception:
+            continue
+    return done
 
 
 def main() -> None:
@@ -74,15 +98,20 @@ def main() -> None:
     print("PILOT res={} t_ctx={} clips={} chunks={}".format(
         PILOT_RES, C.T_CTX, total, len(jobs)), flush=True)
 
-    todo = [j for j in jobs
-            if not os.path.exists(os.path.join(
-                OUT, "chunks", "{}_{:04d}.npz".format(j[0], j[2])))]
-    print("{} chunks already done, {} to go".format(
-        len(jobs) - len(todo), len(todo)), flush=True)
+    done_by_split = {s: completed_clip_ids(s)
+                     for s in ("anomaly", "control_calib", "control_eval")}
+    todo = []
+    for split, specs in jobs:
+        rest = [(i, c) for i, c in specs if i not in done_by_split[split]]
+        if rest:
+            todo.append((split, rest))
+    n_done_clips = sum(len(v) for v in done_by_split.values())
+    print("{} clips already done, {} chunks to go".format(
+        n_done_clips, len(todo)), flush=True)
 
     adapter = None
     t_start = time.time()
-    for n_done, (split, specs, cid) in enumerate(todo):
+    for n_done, (split, specs) in enumerate(todo):
         if adapter is None:
             model = VJEPA2Model.from_pretrained(C.MODEL_ID, dtype=torch.float32,
                                                 attn_implementation="sdpa")
@@ -94,8 +123,9 @@ def main() -> None:
 
         clips = np.stack([make_clip(i, c)[0] for i, c in specs])
         out = run_extraction(clips, adapter, batch_size=len(specs), progress=False)
+        # named by first clip id, so the filename is stable under reordering
         np.savez_compressed(
-            os.path.join(OUT, "chunks", "{}_{:04d}.npz".format(split, cid)),
+            os.path.join(OUT, "chunks", "{}_{:07d}.npz".format(split, specs[0][0])),
             condition=np.array([c if c is not None else "control" for _, c in specs]),
             clip_id=np.array([i for i, _ in specs], dtype=np.int64),
             **{k: out[k] for k in KEYS})
@@ -113,9 +143,19 @@ def main() -> None:
         parts = [np.load(f, allow_pickle=False) for f in files]
         merged = {k: np.concatenate([p[k] for p in parts], axis=0)
                   for k in KEYS + ("condition", "clip_id")}
-        order = np.argsort(merged["clip_id"], kind="stable")
-        scores[split] = {k: v[order] for k, v in merged.items()}
-        print("{:15s} {} clips".format(split, scores[split]["Z"].shape[0]))
+        # dedupe then sort, so a re-run that renamed files cannot double-count
+        _, keep = np.unique(merged["clip_id"], return_index=True)
+        scores[split] = {k: v[np.sort(keep)] for k, v in merged.items()}
+        order = np.argsort(scores[split]["clip_id"], kind="stable")
+        scores[split] = {k: v[order] for k, v in scores[split].items()}
+        n = scores[split]["Z"].shape[0]
+        if n == 0:
+            raise SystemExit("split {} has no clips; nothing to analyse".format(split))
+        print("{:15s} {} clips".format(split, n))
+        if split == "anomaly":
+            uniq, cnt = np.unique(scores[split]["condition"], return_counts=True)
+            print("                 " + ", ".join(
+                "{}={}".format(u, c) for u, c in zip(uniq, cnt)))
 
     r = analyse(scores, os.path.join(OUT, "analysis"),
                 model_name=C.MODEL_ID + " @128px (PILOT)",

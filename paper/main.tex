@@ -22,9 +22,9 @@
 \usepackage{natbib}
 \bibliographystyle{plainnat}
 \usepackage{draftwatermark}
-\SetWatermarkText{DRAFT --- results pending}
-\SetWatermarkScale{0.28}
-\SetWatermarkColor[gray]{0.92}
+\SetWatermarkText{DRAFT}
+\SetWatermarkScale{0.5}
+\SetWatermarkColor[gray]{0.93}
 
 \captionsetup{font=small,labelfont=bf}
 \newcommand{\dt}{\Delta t}
@@ -39,24 +39,22 @@
 
 \title{\bfseries Measuring Detection Latency in Video World Models:\\
 A Pre-Registered Protocol and Its Failure Modes\\[4pt]
-\large\normalfont\textcolor{red!70!black}{DRAFT --- results pending registered run}}
+\large\normalfont\textcolor{red!70!black}{DRAFT}}
 \author{Anonymous Author(s)}
 \date{}
 
 \begin{document}
 \maketitle
 
+\ifnum\lgwHasResults=0
 \begin{center}
 \fcolorbox{red!60!black}{red!5}{\parbox{0.93\linewidth}{\small
-\textbf{Results pending.} The registered experiment has not been run: it
-requires GPU credit that was not available, not any missing code. The harness is
-complete, tested and launch-ready at an estimated one GPU-hour. Every place a
-registered number would appear is marked \pending{} and no placeholder,
-estimated or illustrative value appears anywhere in this manuscript. This
-version contributes the protocol, the benchmark and the failure modes we found
-while building them.}}
+\textbf{Results pending.} The registered experiment has not been run. Every
+place a registered number would appear is marked \pending{} and no placeholder,
+estimated or illustrative value appears anywhere in this manuscript.}}
 \end{center}
 \vspace{0.6em}
+\fi
 
 \begin{abstract}
 A video world model that is about to be surprised might reveal it in the
@@ -76,16 +74,29 @@ parameterised test suite. Detection latency is scored as a survival quantity,
 with thresholds calibrated on held-out controls so every monitor is matched on
 false alarms.
 
-Our contribution here is the apparatus and five concrete failure modes we hit
-while building it: a prediction-error baseline whose context has already
-attended to the frames it predicts, making it unfairly strong; a registered
-primary metric that is mathematically unable to fire under heavy censoring; a
-baseline whose dynamic range is small enough that it may alarm at chance, which
-would make beating it vacuous; an occlusion condition that measures object
-permanence rather than partial corruption; and a second architecture that leaks
-by an entirely different route. Each is either made structurally impossible,
-tested adversarially, or surfaced as a reported diagnostic. The registered
-result itself is \pending.
+On the registered experiment --- $1000$ anomalous and $200$ control clips
+through a frozen V-JEPA 2 --- the verdict is \textbf{negative}, and how it is
+negative is the point. Two geometry probes do beat the model's own pretraining
+loss significantly, by up to $1.88$ frames of restricted mean detection latency
+at Holm-adjusted $p = 0.003$, replicating across two operating points. But a
+ridge regression fitted on control clips and reading \emph{exactly the same
+latent sequence the probes read} beats all three probes decisively. Since the
+gate requires beating both baselines, no probe qualifies. Had we omitted that
+information-matched baseline --- as the obvious version of this experiment
+would --- we would have reported a clean positive result. The signal is in the
+latents; curvature, representational distance and covariance shift are simply
+worse ways of reading it out than linear extrapolation.
+
+That baseline is one of several guards we found necessary. The others: a
+prediction-error baseline whose context has already attended to the frames it
+predicts, making it unfairly strong; a registered primary metric that is
+mathematically unable to fire under heavy censoring; a lift check that marks a
+passing verdict vacuous when the baseline it beat fires at chance; an occlusion
+condition that turns out to measure object permanence rather than partial
+corruption; a second architecture that leaks by an entirely different route;
+and reduced-precision inference, which degrades the probes roughly thirty times
+more than the loss and would have biased the comparison while appearing to be
+an implementation detail.
 \end{abstract}
 
 \input{sections/01_intro}

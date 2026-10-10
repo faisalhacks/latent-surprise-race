@@ -2,9 +2,18 @@
 
 We set out to measure whether the internal geometry of a frozen video world
 model crosses an alarm threshold sooner than the model's own prediction error,
-and built the experiment so the answer could come out either way. That
-measurement is \pending: it needs about one GPU-hour of credit, not any missing
-code. We report the apparatus, and what building it revealed.
+and built the experiment so the answer could come out either way. It came out
+negative, and informatively so: two probes beat the model's own loss
+significantly, then lost to a ridge regression reading the same latents. The
+signal is in the representation; these particular geometric statistics are not
+the best way to read it.
+
+We want to be precise about the scope of that. It is a statement about three
+pre-specified second-order summaries of a mean-pooled latent, on one synthetic
+benchmark, in one frozen model. It is not a claim that no geometric monitor can
+beat prediction error, and the space of candidate probes is far larger than the
+three we fixed in advance --- which we fixed precisely so that we could not
+search it.
 
 The methodological point stands independently of the eventual verdict. A
 comparison between an internal signal and an output error is unusually easy to
@@ -30,14 +39,17 @@ is not a property a harness can confer.
 
 None of these guards is sophisticated. What they share is that omitting any one
 of them yields a cleaner-looking result, which is why we think they belong in
-the protocol rather than in the discussion. To our knowledge the lift check in
-particular is not standard in representation-based anomaly detection, though the
-collapse it guards against is documented \citep{pavuluri2026asleep}.
+the protocol rather than in the discussion. The information-matched baseline is
+the sharpest case: it is the single component that turned a publishable
+positive into a null, and it costs a ridge solve. To our knowledge the lift
+check is likewise not standard in representation-based anomaly detection,
+though the collapse it guards against is documented
+\citep{pavuluri2026asleep}.
 
 We release the harness as a benchmark that another architecture joins in about
 twenty-five lines and is then held to the same contract automatically, so that
 the next claim of this shape can be checked rather than argued --- including
-ours, once the run happens.
+this one.
 
 \section*{Reproducibility statement}
 
@@ -49,4 +61,15 @@ that fails if edited. The causality and leakage guarantees are tested, not
 asserted. Every table, figure and numeric sentence in this paper is generated
 from a run's result JSON by a script in the repository; with no run analysed,
 the manuscript compiles with visible \textsc{pending} markers rather than
-plausible values, which is why no registered number appears above.
+plausible values.
+
+The registered run is tagged \code{phase2-20261010-174237}: Modal, NVIDIA
+A10G, fp32/TF32, $1200$ clips, $7554$ GPU-seconds. One limitation of the
+process rather than the experiment should be stated plainly: the analysis runs
+as the final step of the same entrypoint as the inference, so the frozen
+protocol was \emph{not} published before the result was seen. The freeze
+nonetheless precedes the data by four days and is verifiable from the commit
+history --- the pre-registration commit is dated 2026-10-06 and the blob hash
+of the protocol document is identical at that commit and at the current head
+--- but a reader has the authors' word for the ordering rather than an
+independent timestamp. The deviation log records this.

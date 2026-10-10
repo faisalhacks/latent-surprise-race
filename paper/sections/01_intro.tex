@@ -62,11 +62,23 @@ knowledge this check is not standard practice in representation-based anomaly
 detection, though the underlying phenomenon is documented.
 \end{enumerate}
 
-\paragraph{What this version contributes.}
-The registered experiment is \pending: it needs roughly one GPU-hour of credit
-that was not available, not any missing code. What we can report now is the
-apparatus and what building it taught us.
+\paragraph{What we find.}
+The registered experiment returns a \textbf{negative} verdict, and the shape of
+the negative is the contribution. Probes A and B alarm significantly sooner than
+$\mathcal{L}_0$, the model's own pretraining objective --- up to $1.88$ frames
+of \RMTA{} at Holm-adjusted $p = 0.003$, replicating across both operating
+points and corroborated by the log-rank test. On that evidence alone the
+hypothesis looks confirmed.
 
+It is not. $\mathcal{L}_1$, a ridge map from $[z_{t-1}; z_{t-2}]$ to $z_t$
+fitted on control clips, reads exactly the latent sequence the probes read and
+beats every one of them by $2.05$ to $6.60$ frames. The anomaly signal is
+present in the latents; the three geometric statistics are simply worse
+readouts of it than a two-frame linear extrapolation. Neither baseline fires at
+chance and the primary metric is not degenerate, so this null is informative
+rather than an artefact of a weak comparison.
+
+\paragraph{What this contributes.}
 \begin{itemize}
 \item A pre-registered protocol for detection latency in frozen video world
 models, with causality enforced structurally --- monitors are streaming objects

@@ -64,6 +64,18 @@ when only `f_{t-1}, f_t` change, *and* that it **does** move when `f_{t-2}`
 changes — so the guarantee cannot be satisfied trivially by a prediction that
 ignores its input.
 
+## Worked examples in this repository
+
+| adapter | architecture | native loss | file |
+|---|---|---|---|
+| `vjepa2` | joint-embedding predictive, latent prediction | masked-token representation prediction | `src/lgw/vjepa2_adapter.py` |
+| `videomae` | masked autoencoder, pixel reconstruction | masked-patch pixel MSE | `src/lgw/videomae_adapter.py` |
+| `surrogate` | fixed random projection (plumbing only) | persistence | `src/lgw/surrogate.py` |
+
+The first two sit on opposite sides of the pixel/latent divide, which is the
+point: if an effect appears in one and not the other, that is informative about
+the training objective rather than about the harness.
+
 ## The trap this exists to prevent
 
 V-JEPA 2's reference implementation runs one encoder over the whole clip and
@@ -80,6 +92,15 @@ The loss is then partly self-fulfilling, the baseline looks stronger than it is,
 and the comparison is biased *against* the hypothesis under test. If your model
 has bidirectional attention over the window, you need the same two-pass
 treatment — see `vjepa2_adapter.py` for a worked example.
+
+**The trap is architecture-specific. Re-ask it for your model.** VideoMAE fails
+differently: `VideoMAEForPreTraining` builds its regression targets by
+patchifying *the same tensor it is handed*, so passing it the context window
+scores the prediction against the overwritten pixels — a near-zero loss and a
+baseline that looks far stronger than it is. Same bias, completely different
+route. `videomae_adapter.py` predicts from the context window while patchifying
+the target from the full window. The contract test catches both — but only for
+adapters that are in it.
 
 ## Tubelets and temporal granularity
 

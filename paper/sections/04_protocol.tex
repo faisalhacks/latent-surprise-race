@@ -70,6 +70,30 @@ $p$ is below $0.01$. If no probe qualifies, the protocol terminates the
 expansion track and the result is written up as a negative one. The gate is
 evaluated by code, not by reading tables.
 
+\subsection{Pre-specified follow-up: what lives in the lag window}
+\label{sec:mech}
+
+If a probe does alarm before the loss, the frames in between are where the
+representation has registered something the output error has not, and the
+natural question is what. We pre-specify the analysis here so that it is fixed
+before the lag window is known: fit linear probes to the latents $z_t$ for
+$t \in [t^\star + \dt_{\text{probe}},\; t^\star + \dt_{\text{loss}})$, targeting
+(i) which of the four anomalies was injected, and (ii) the disc's position and
+velocity, which are the quantities the physics conditions actually change.
+
+Two controls are part of the specification, because a linear probe on
+high-dimensional latents is easy to over-read. Frames from one clip are highly
+correlated, so a random train/test split lets the probe memorise clip identity
+and return a near-perfect score that means nothing; all cross-validation is
+therefore grouped by clip. And an accuracy is uninterpretable without a
+reference, so every score is reported beside the majority-class rate and a
+\emph{clip-level} label-shuffled control, which must land at chance. If the
+shuffled control does not land at chance, the split is leaking and the real
+score is not reported as evidence.
+
+This analysis is contingent on the gate and is listed here as method, not
+result.
+
 \subsection{Guards against a vacuous verdict}
 
 Two checks sit outside the hypothesis tests and exist to stop the gate from

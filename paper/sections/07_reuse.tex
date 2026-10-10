@@ -25,6 +25,26 @@ the gate are then shared verbatim. Adding V-JEPA 2 takes roughly twenty-five
 lines beyond preprocessing; a model with no native prediction head returns
 \code{None} and is scored against $\mathcal{L}_1$ alone.
 
+\paragraph{A second architecture, as a demonstration.}
+To check that the contract is genuinely architecture-agnostic rather than
+V-JEPA-shaped, we implemented a second adapter for VideoMAE. It is the
+informative contrast: a masked autoencoder that reconstructs \emph{pixels},
+against a joint-embedding architecture that predicts \emph{representations},
+sharing a tubelet size and patch size so the mapping is clean. It passes every
+contract test.
+
+Implementing it also surfaced that the leakage trap is architecture-specific.
+\texttt{VideoMAEForPreTraining} constructs its regression targets by patchifying
+\emph{the same tensor it is handed}. Passing it the context window would
+therefore score the prediction against the overwritten pixels rather than the
+true frames $t{-}1,t$, giving a near-zero loss and a baseline that looks far
+stronger than it is --- the same failure as V-JEPA 2's single-pass loss, reached
+by a completely different route. The adapter predicts from the context window
+while patchifying the target from the full window, replicating the model's own
+per-patch normalisation. The general lesson is that ``is this loss causal?'' has
+to be re-asked, and re-tested, for every architecture; it is not a property the
+harness can confer.
+
 \paragraph{Contributions are held to the contract automatically.}
 Every registered adapter is run through a parameterised test suite: output
 shapes, the loss window, prefix invariance, the future-inversion causality

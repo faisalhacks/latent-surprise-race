@@ -15,6 +15,7 @@ from lgw.adapters import REGISTRY, available_adapters        # noqa: E402
 from lgw.datagen import make_clip                            # noqa: E402
 from lgw.extract import run_extraction                       # noqa: E402
 from lgw.surrogate import SurrogateAdapter                   # noqa: E402
+from lgw.videomae_adapter import VideoMAEAdapter             # noqa: E402
 from lgw.vjepa2_adapter import VJEPA2Adapter                 # noqa: E402
 
 TINY_T_CTX, TINY_RES = 8, 32
@@ -33,10 +34,24 @@ def _tiny_vjepa2():
                          t_ctx=TINY_T_CTX, res=TINY_RES, name="tiny")
 
 
+def _tiny_videomae():
+    from transformers import VideoMAEConfig, VideoMAEForPreTraining
+    cfg = VideoMAEConfig(
+        image_size=TINY_RES, patch_size=16, num_frames=TINY_T_CTX,
+        tubelet_size=2, hidden_size=96, num_hidden_layers=2,
+        num_attention_heads=4, intermediate_size=192, decoder_hidden_size=96,
+        decoder_num_hidden_layers=2, decoder_num_attention_heads=4,
+        decoder_intermediate_size=192)
+    torch.manual_seed(0)
+    return VideoMAEAdapter(VideoMAEForPreTraining(cfg), device="cpu",
+                           dtype=torch.float32, name="tiny-videomae")
+
+
 # Cheap constructors, one per registered adapter.
 CONSTRUCTORS = {
     "surrogate": lambda: SurrogateAdapter(),
     "vjepa2": _tiny_vjepa2,
+    "videomae": _tiny_videomae,
 }
 
 

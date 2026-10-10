@@ -8,6 +8,45 @@ followed exactly.
 | 2026-10-06 | 3 | Specified the Wilcoxon tail as one-sided primary (two-sided also always reported) before any inference run. | H1 is directional; the tail had to be fixed before seeing data to avoid a post-hoc choice. |
 | 2026-10-06 | 3 | Added two pre-registered SECONDARY analyses (RMTA with paired bootstrap; a clip-matched 5% FPR threshold regime). Primary metric and gate unchanged. | Both weaknesses follow from the definition of the primary metric, not from any observed result: a censored median is degenerate below 50% detection, and 1% per-frame compounds to ~14% per clip over 15 frames. Fixed before any model inference, so neither can be chosen post hoc. |
 
+## Repository history rewritten to redact workspace names (2026-10-10)
+
+On **2026-10-10**, `git filter-branch --tree-filter` was run over the whole
+branch to redact Modal workspace/profile names from `STATUS.md`, where they had
+been recorded while diagnosing which account could run the GPU job. The names
+were replaced with generic labels (`workspace-A` ... `workspace-E`).
+
+What this did, precisely:
+
+| | |
+|---|---|
+| Commits re-hashed | **13** (every commit from the second onward, because each contained `STATUS.md` or descended from one that did) |
+| Author dates | **preserved** |
+| Original SHAs of those 13 | **pruned** and not recoverable from this repository |
+| Pre-registration commit `033ee1ac2ca27e26bc865194b51ba146d2a3d206` | **unchanged** — it predates `STATUS.md`, so its tree was untouched and its SHA and dates survived |
+| `PREREGISTRATION.md` | **unchanged** — its blob SHA at `HEAD` (`ed695cb6f45b8e31de1a22ec9a54c34271ce64a3`) is identical to its blob in the freeze commit |
+| `DEVIATIONS.md` content | unchanged by the rewrite; only the SHAs of later commits that edited it moved |
+
+The rewrite was performed **before** the instruction to preserve commit SHAs was
+given, and is recorded here rather than quietly left out. **No secrets were
+ever committed**: Modal API tokens were only ever passed as environment
+variables and never written into the repository. The redaction concerned
+account/workspace *names*, not credentials.
+
+No history rewriting has occurred since, and none is planned. The freeze is
+intact and independently verifiable:
+
+```bash
+git rev-parse 033ee1a:PREREGISTRATION.md    # -> ed695cb6f45b8e31de1a22ec9a54c34271ce64a3
+git rev-parse HEAD:PREREGISTRATION.md       # -> same
+```
+
+## Commit identity changed (2026-10-10)
+
+New commits from 2026-10-10 onward are authored as
+`faisalhacks <141169331+faisalhacks@users.noreply.github.com>`. Earlier commits
+retain their original authorship; rewriting it would change the
+pre-registration SHA and destroy the freeze, so it was not done.
+
 ## Pivot: registered experiment parked (2026-10-10)
 
 | date | what | why |

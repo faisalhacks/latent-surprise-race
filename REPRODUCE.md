@@ -1,10 +1,29 @@
 # Reproduce
 
-One command, no GPU, no downloads, ~3 minutes:
+One command, no GPU, no downloads, ~3 minutes.
+
+**bash / zsh / Git Bash:**
 
 ```bash
 pip install -r requirements.txt && python -m pytest tests -q && python scripts/run_local_validation.py 40
 ```
+
+**Windows PowerShell 5.1** — `&&` is a parser error there, so chain with `;`
+and check `$?`:
+
+```powershell
+pip install -r requirements.txt; if ($?) { python -m pytest tests -q }; if ($?) { python scripts/run_local_validation.py 40 }
+```
+
+or, equivalently, as three lines:
+
+```powershell
+pip install -r requirements.txt
+python -m pytest tests -q
+python scripts\run_local_validation.py 40
+```
+
+(PowerShell 7+ supports `&&`, so the bash form works there unchanged.)
 
 That runs the full test suite (causality, leakage, probe correctness, adapter
 contract, paper generation) and then the entire pipeline end-to-end on CPU with
@@ -36,6 +55,9 @@ See `docs/PARKED_EXPERIMENTS.md` (entry P1) for the exact launch command, and
 python scripts/run_pilot_cpu.py 40 70 50        # 128px, CPU, checkpointed
 python scripts/run_pilot_cpu.py --analyse-only  # analyse whatever is on disk
 ```
+
+On Windows use backslashes (`python scripts\run_pilot_cpu.py 40 70 50`); the
+forward-slash form also works from Git Bash.
 
 Not the registered experiment: reduced resolution and scale. See
 `exploratory_pilot_128px/README.md`.

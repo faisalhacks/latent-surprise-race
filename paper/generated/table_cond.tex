@@ -1,1 +1,12 @@
-\begin{center}\fbox{\parbox{0.8\linewidth}{\centering\vspace{4pt}\textsc{pending}\\[2pt]\footnotesize No inference run has been analysed yet. Regenerate with \texttt{python scripts/make\_paper.py}\vspace{4pt}}}\end{center}
+\begin{tabular}{lrrrr}
+\toprule
+Monitor & gravity inv. & friction & occlusion & frame drop \\
+\midrule
+$\mathcal{L}_0$ (V-JEPA 2 own loss) & 12.59 & 13.08 & 13.59 & 2.23 \\
+$\mathcal{L}_1$ (ridge, info-matched) & 10.56 & 12.74 & 1.50 & 0.98 \\
+\midrule
+$\mathrm{A}$: curvature & 13.62 & 13.56 & 8.95 & 1.45 \\
+$\mathrm{B}$: repr.\ distance & 13.14 & 12.86 & 4.88 & 3.10 \\
+$\mathrm{C}$: covariance shift & 13.43 & 13.62 & 12.72 & 12.42 \\
+\bottomrule
+\end{tabular}

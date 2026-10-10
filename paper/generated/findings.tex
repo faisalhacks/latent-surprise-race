@@ -1,1 +1,9 @@
-No inference run has been analysed yet, so this section is empty by construction rather than by omission. Running the harness repopulates every number in it automatically.
+At the pre-registered operating point, \texttt{loss\_L0} alarmed on 36.6\% of anomalous clips against a held-out clip-level false-alarm rate of 14.0\% (lift +0.226); \texttt{loss\_L1} alarmed on 70.8\% of anomalous clips against a held-out clip-level false-alarm rate of 10.0\% (lift +0.608).
+
+Both baselines detect anomalies above chance, so the comparison against them is meaningful.
+
+The strongest probe by RMTA is \texttt{probe\_B}, whose worst-case gain against either baseline is -2.05 frames; against \texttt{loss\_L0} its RMTA gain is +1.88 frames (95\% CI [+1.48, +2.26], Holm-adjusted $p=0.003$).
+
+No probe satisfies the frozen Early Warner criterion (a median gain of at least one frame against both baselines at Holm-adjusted $p<0.01$).
+
+Re-deriving thresholds so the clip-level false-alarm rate is 5\% rather than matching the per-frame rate does not change the picture: the Early Warner set becomes empty.

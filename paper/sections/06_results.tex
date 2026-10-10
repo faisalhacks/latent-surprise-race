@@ -1,101 +1,181 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{Registered experiment: \texorpdfstring{\pending}{pending}}
+Run: \lgwModel, $n_{\text{anom}} = \lgwNAnom$, $n_{\text{calib}} = \lgwNCalib$,
+$n_{\text{eval}} = \lgwNEval$, $d = \lgwDim$, fp32, \lgwNBoot{} bootstrap
+resamples. Source: \lgwSource.
 
-The registered Phase~2 experiment --- 1000 anomalous and 200 control clips at
-$256$~px through frozen V-JEPA 2, under the protocol of
-Sections~\ref{sec:method} and~\ref{sec:protocol} --- has \textbf{not been run}.
-It requires approximately one GPU-hour of credit that was not available; the
-harness is complete, tested, and launch-ready, and the run is recorded with its
-exact launch command in the repository's parked-experiment register.
+\subsection{The registered verdict}
 
-Consequently this section reports \textbf{no registered results}. We have
-deliberately not filled the gap with illustrative, estimated or placeholder
-numbers. The manuscript is generated from run outputs by a script
-(Section~\ref{sec:reuse}); with no run analysed, that script emits visible
-\textsc{pending} markers rather than plausible values, and the following
-quantities are all \pending:
+\textbf{\lgwVerdict.} No geometry probe satisfies the frozen gate criterion.
+Two diagnostics say this null is informative rather than an artefact:
 
 \begin{itemize}
-\item detection latency per monitor, under both threshold regimes;
-\item the paired probe-versus-baseline contrasts and their corrected $p$-values;
-\item Kaplan--Meier curves and the restricted mean detection latency;
-\item per-anomaly-family breakdowns;
-\item the lift of each monitor, and therefore whether either baseline fires at
-chance;
-\item the Phase~3 gate verdict.
+\item \textbf{Neither baseline fires at chance} (\lgwBaselinesAtChance{} flagged).
+$\mathcal{L}_0$ detects $36.6\%$ of anomalous clips against a $14.0\%$ held-out
+clip-level false-alarm rate (lift $+0.226$); $\mathcal{L}_1$ detects $70.8\%$
+against $10.0\%$ (lift $+0.608$). So the probes were compared against monitors
+that genuinely work, and the verdict is not vacuous.
+\item \textbf{The primary metric is not degenerate} (\lgwMedianDegenerate).
+$\mathcal{L}_1$ has a median detection latency of $4$ frames, well inside the
+window, so the median could have separated the monitors. It did not, because
+there was nothing to separate in the probes' favour.
 \end{itemize}
 
-We state plainly that the central empirical question of this work --- whether
-representation geometry crosses an alarm threshold sooner than the model's own
-prediction error --- \textbf{remains open}. Nothing below should be read as
-bearing on it.
+\input{generated/findings}
 
-\subsection{Exploratory CPU pilot (not the registered experiment)}
-\label{sec:pilot}
+\subsection{What actually happened: the probes beat the wrong baseline}
 
-To size the registered run and sanity-check the pipeline against real
-pretrained weights, we began a reduced-resolution pilot on CPU. It is
-\textbf{exploratory}, it is \textbf{not} the registered experiment, and it
-cannot substitute for one.
+The headline number is not that the probes lost, but \emph{how}
+(Tables~\ref{tab:tta} and~\ref{tab:cmp}).
 
-\begin{itemize}
-\item \textbf{Resolution.} $128$~px rather than the registered $256$~px, which
-shrinks the patch grid from $16\times16$ to $8\times8$. Context length, tubelet
-size, all probe definitions, the $\mathcal{L}_0$ construction, thresholds and
-metrics are unchanged. We rejected $96$~px because the disc would then be
-smaller than a single patch.
-\item \textbf{Scale.} A reduced design of \lgwPilotTarget{} clips rather than
-$1200$.
-\item \textbf{Status at the time of writing:} \lgwPilotTotal{} of
-\lgwPilotTarget{} clips extracted --- \lgwPilotCalib{} calibration controls,
-\lgwPilotEval{} evaluation controls, \lgwPilotAnom{} anomalous. The run is
-\lgwPilotState.
-\end{itemize}
+\paragraph{Probes A and B are genuinely faster than the model's own loss.}
+Against $\mathcal{L}_0$, probe~B gains $+1.88$ frames of \RMTA{}
+(95\% CI $[+1.48, +2.26]$, Holm-adjusted $p = 0.003$) and probe~A gains $+0.98$
+frames ($[+0.70, +1.26]$, $p = 0.003$). Both are significant, both replicate at
+the clip-matched operating point, and the log-rank test agrees. Read in
+isolation, this is exactly the positive result the hypothesis predicted.
 
-\textbf{No analysis of the pilot is reported here.} Thresholds are calibrated on
-control clips, so until the control splits are complete no threshold exists, no
-alarm time is defined, and no detection latency can be computed. Reporting
-partial anomaly data without calibrated thresholds would be meaningless rather
-than merely preliminary. The pilot ordering was arranged so that controls are
-extracted first, precisely so that an interrupted run becomes a smaller but
-coherent experiment rather than an incoherent one; at the time of writing that
-threshold has not yet been crossed.
+\paragraph{But a ridge regression on the same latents beats all three probes
+decisively.} $\mathcal{L}_1$ --- a linear map from $[z_{t-1}; z_{t-2}]$ to
+$z_t$, fitted on control clips only --- reaches a median detection latency of
+$4$ frames where every probe remains censored at $14$, and an \RMTA{} of $6.45$
+against the best probe's $8.49$. The probes lose to it by $2.05$ to $6.60$
+frames of \RMTA{}, at $p$-values below $10^{-39}$ two-sided.
 
-Two observations from a two-clip correctness check on the real pretrained
-weights are reported in Section~\ref{sec:limitations} as risks to the registered
-run's power. They concern the \emph{magnitude and dispersion} of monitor scores,
-not detection latency, and they are not results about the hypothesis.
+Since the gate requires beating \emph{both} baselines, the verdict is negative.
+We think that is the right call, and the reason is the point of the result:
+\textbf{$\mathcal{L}_1$ consumes exactly the sequence $\{z_t\}$ that the probes
+consume.} It sees no extra information. It is a two-frame linear extrapolation,
+about as simple a readout as the latent sequence admits. That it dominates three
+hand-designed geometric statistics says the anomaly signal is present in the
+latents and that curvature, representational distance and covariance shift are
+simply \emph{worse ways of reading it out} --- not that geometry carries
+something prediction error misses.
+
+\paragraph{Had we omitted $\mathcal{L}_1$, this paper would have reported a
+positive result.} Probes A and B beat the model's own pretraining objective at
+$p = 0.003$ with confidence intervals excluding zero, under two operating
+points and two tests. The conclusion ``latent geometry signals anomalies before
+prediction error does'' would have been defensible, reviewable, and wrong in the
+way that matters: the effect is attributable to $\mathcal{L}_0$ being an
+insensitive monitor on this benchmark, not to geometry being special. The
+information-matched baseline was registered precisely to make that
+distinction, and it is the single component that changed the conclusion.
+
+\subsection{Where detection happens at all}
+
+The per-condition breakdown (Table~\ref{tab:cond}) shows the pooled numbers
+average over very different regimes.
+
+\emph{Frame drop} is detected quickly by everything ($\mathcal{L}_1$ \RMTA{}
+$0.98$, probe~A $1.45$, $\mathcal{L}_0$ $2.23$): a held frame makes the next
+latent nearly identical to the last, which both a predictor and a curvature
+statistic register at once.
+
+\emph{Occlusion} separates the monitors most sharply: $\mathcal{L}_1$ reaches
+$1.50$ while $\mathcal{L}_0$ is at $13.59$, barely detecting it. Recall that
+this condition hides the disc completely in \lgwOccFullyHidden{} of
+post-injection frames, so it is an object-permanence probe
+(Section~\ref{sec:benchmark}). \citet{xie2026tracking} report that V-JEPA 2's
+predictor forgets moving hidden objects within about $0.3$~seconds while its
+encoder retains them far longer --- which is consistent with a monitor reading
+pooled encoder states ($\mathcal{L}_1$, and the probes) outperforming one
+reading the predictor's error ($\mathcal{L}_0$) on exactly this family. We
+flag the consistency; we did not test the mechanism.
+
+\emph{Gravity inversion} and \emph{friction} are barely detected by anything
+(all \RMTA{} between $12.6$ and $13.7$). A $15$-frame window is simply too short
+for a change in acceleration to move the representation much, which is the
+limitation we anticipated for these families rather than a discovery.
+
+So the pooled result is driven by frame drop and occlusion; the two genuinely
+physical perturbations are close to undetectable at this horizon for every
+monitor we tested, including the model's own loss.
+
+\subsection{Tables and curves}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_tta}
+\caption{Detection latency per monitor at the pre-registered operating point
+(per-frame false-alarm rate matched at $1\%$). \emph{Lift} is detection rate
+minus held-out clip-level false-alarm rate; no monitor is flagged as firing at
+chance. \RMTA{} is the restricted mean detection latency in frames, lower being
+faster, with a percentile bootstrap interval.}
+\label{tab:tta}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_cmp}
+\caption{Paired probe-versus-baseline comparisons. Positive gain means the
+probe alarms sooner. $p$-values are Holm-adjusted across all six comparisons.
+Probes A and B beat $\mathcal{L}_0$ significantly and lose to $\mathcal{L}_1$
+decisively; the gate requires beating both.}
+\label{tab:cmp}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\IfFileExists{generated/fig_survival.png}{%
+  \includegraphics[width=\linewidth]{generated/fig_survival.png}}{%
+  \fbox{\parbox{0.8\linewidth}{\centering\vspace{18pt}\textsc{pending}\vspace{18pt}}}}
+\caption{Kaplan--Meier curves for detection latency under both threshold
+regimes: the probability that an anomaly remains undetected $\dt$ frames after
+injection. $\mathcal{L}_1$ (grey dashed) drops fastest. Probe~C stays near $1$,
+reflecting its low detection rate.}
+\label{fig:survival}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_cond}
+\caption{\RMTA{} by anomaly family (frames; lower is faster). The families
+differ in disturbance magnitude, so columns are not comparable with one
+another --- they show \emph{where} detection happens, not which anomaly is
+``easier''.}
+\label{tab:cond}
+\end{table}
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_secondary}
+\caption{The secondary operating point: thresholds re-derived so the
+clip-level false-alarm rate on calibration controls is $5\%$. Registered before
+any inference run. The ordering of monitors is unchanged, so the conclusion is
+not an artefact of the operating point.}
+\label{tab:secondary}
+\end{table}
 
 \subsection{Numerical precision is not neutral between the two monitor families}
 \label{sec:precision}
 
-This is a measurement on the real pretrained weights, and it is reported
-because it is a real result --- but it says nothing about the hypothesis, so it
-is not a registered outcome.
-
-We compared fp32, bf16 and fp16 on the actual monitor values
+Before the registered run we compared fp32, bf16 and fp16 on the real weights
 (Table~\ref{tab:precision}). Reduced precision does not degrade the monitors
-evenly. Under bf16, the worst geometry probe shifts by a median
+evenly. Under bf16 the worst geometry probe shifts by a median
 \lgwPrecWorstProbeBf{} while $\mathcal{L}_0$ shifts by \lgwPrecWorstLossBf{} ---
-roughly a factor of \lgwPrecRatioBf{}. The mechanism is not subtle:
+about a factor of \lgwPrecRatioBf{}. The mechanism is structural:
 $\mathcal{L}_0$ is a mean over $H'W' \times d$ values, so independent rounding
 error averages away, whereas probe~A is a second difference of nearby vectors
 and probe~B a cosine against a mean of five nearly identical vectors. Both
 amplify exactly the error the loss suppresses.
 
-The consequence matters for anyone running this comparison. Choosing a reduced
-precision for throughput would have handicapped the probes while leaving the
-baseline essentially intact --- a \emph{directional} bias against the
-hypothesis, introduced by what looks like an implementation detail and
-invisible in any aggregate accuracy check. We therefore run the registered
-experiment in fp32, as pre-registered, at roughly $2.9\times$ the cost per clip.
+Choosing a reduced precision for throughput would therefore have handicapped the
+probes while leaving the baseline essentially intact --- a \emph{directional}
+bias against the hypothesis, introduced by what looks like an implementation
+detail and invisible to any aggregate accuracy check. We ran the registered
+experiment in fp32 as pre-registered, at roughly $2.9\times$ the cost per clip
+($7554$ GPU-seconds for $1200$ clips on an A10G).
 
-We flag this as a general hazard: in any comparison between a pooled output
-error and a higher-order statistic of internal states, the two sides have
-different numerical conditioning, and the precision setting is part of the
-experimental design rather than a free parameter.
+We flag this as a general hazard: whenever a pooled output error is compared
+against a higher-order statistic of internal states, the two sides have
+different numerical conditioning, and precision is part of the experimental
+design rather than a free parameter.
 
 \begin{table}[t]
 \centering
@@ -107,27 +187,25 @@ ordering. The loss is robust; the geometry probes are not.}
 \label{tab:precision}
 \end{table}
 
-\subsection{What the harness does produce}
+\subsection{Harness verification}
 
-The apparatus itself is verified, and these are results about the protocol
-rather than about world models:
+Independently of the outcome: every monitor is a streaming object that cannot
+reference a future frame, verified by inverting all frames after a cut point and
+asserting bit-identity for earlier ones, against the real architecture; the
+$\mathcal{L}_0$ prediction does not move when only the predicted frames change
+but does move when $f_{t-2}$ changes; probe values match their closed forms to
+$10^{-9}$ and the $O(k^2d)$ covariance identity matches the naive computation to
+machine precision; thresholds are a function of calibration controls alone; and
+both registered adapters pass the identical contract suite.
 
-\begin{itemize}
-\item Every monitor is a streaming object that cannot reference a future frame.
-Inverting all frames after a cut point leaves $z_t$, $\mathcal{L}_0$ and all
-three probes bit-identical for $t$ at or before the cut, including against the
-real V-JEPA 2 architecture.
-\item The $\mathcal{L}_0$ prediction does not move when only the predicted
-frames change, and does move when $f_{t-2}$ changes --- so the causality
-guarantee is not satisfied vacuously by a prediction that ignores its input.
-\item Probe values match their closed forms to $10^{-9}$, and the $O(k^2 d)$
-covariance identity of Section~\ref{sec:method} matches the naive $d \times d$
-computation to machine precision.
-\item Thresholds are a function of calibration controls alone.
-\item Both registered adapters --- V-JEPA 2 and VideoMAE --- pass the identical
-contract suite.
-\item The full orchestration, including fan-out, merge, analysis and the gate,
-was exercised end-to-end at the full $1200$-clip scale using randomly
-initialised weights, so the only unexercised step in the registered run is the
-GPU forward itself.
-\end{itemize}
+\subsection{The exploratory CPU pilot was superseded}
+\label{sec:pilot}
+
+Before GPU access was available we began a reduced-resolution pilot on CPU
+($128$~px, \lgwPilotTarget{} clips). It reached \lgwPilotTotal{} clips
+(\lgwPilotCalib{} calibration controls, \lgwPilotEval{} evaluation controls,
+\lgwPilotAnom{} anomalous) and was stopped when the registered run became
+possible. **No outcome was ever computed from it**: thresholds are calibrated on
+control clips, and its control splits never completed, so no threshold existed
+and no detection latency was defined. It is reported here only so that its
+existence is on the record.

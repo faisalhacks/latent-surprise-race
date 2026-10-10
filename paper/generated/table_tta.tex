@@ -1,1 +1,12 @@
-\begin{center}\fbox{\parbox{0.8\linewidth}{\centering\vspace{4pt}\textsc{pending}\\[2pt]\footnotesize No inference run has been analysed yet. Regenerate with \texttt{python scripts/make\_paper.py}\vspace{4pt}}}\end{center}
+\begin{tabular}{lrrrrrr}
+\toprule
+Monitor & median $\Delta t$ & RMTA & 95\% CI & detect. & clip FPR & lift \\
+\midrule
+$\mathcal{L}_0$ (V-JEPA 2 own loss) & 14.0 & 10.37 & [10.01, 10.70] & 0.366 & 0.140 & +0.226 \\
+$\mathcal{L}_1$ (ridge, info-matched) & 4.0 & 6.45 & [6.08, 6.80] & 0.708 & 0.100 & +0.608 \\
+\midrule
+$\mathrm{A}$: curvature & 14.0 & 9.40 & [9.02, 9.75] & 0.424 & 0.120 & +0.304 \\
+$\mathrm{B}$: repr.\ distance & 14.0 & 8.49 & [8.09, 8.89] & 0.490 & 0.130 & +0.360 \\
+$\mathrm{C}$: covariance shift & 14.0 & 13.05 & [12.86, 13.23] & 0.179 & 0.040 & +0.139 \\
+\bottomrule
+\end{tabular}

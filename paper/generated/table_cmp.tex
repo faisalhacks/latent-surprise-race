@@ -1,1 +1,12 @@
-\begin{center}\fbox{\parbox{0.8\linewidth}{\centering\vspace{4pt}\textsc{pending}\\[2pt]\footnotesize No inference run has been analysed yet. Regenerate with \texttt{python scripts/make\_paper.py}\vspace{4pt}}}\end{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Comparison & median gain & RMTA gain & 95\% CI & $p$ (Holm) & $p$ (Holm, RMTA) \\
+\midrule
+\texttt{probe\_A\_vs\_loss\_L0} & +0.0 & +0.98 & [+0.70, +1.26] & $<10^{-4}$ & 0.003 \\
+\texttt{probe\_A\_vs\_loss\_L1} & -10.0 & -2.95 & [-3.23, -2.68] & 1 & 1 \\
+\texttt{probe\_B\_vs\_loss\_L0} & +0.0 & +1.88 & [+1.48, +2.26] & $<10^{-4}$ & 0.003 \\
+\texttt{probe\_B\_vs\_loss\_L1} & -10.0 & -2.05 & [-2.33, -1.78] & 1 & 1 \\
+\texttt{probe\_C\_vs\_loss\_L0} & +0.0 & -2.68 & [-3.05, -2.32] & 1 & 1 \\
+\texttt{probe\_C\_vs\_loss\_L1} & -10.0 & -6.60 & [-7.00, -6.23] & 1 & 1 \\
+\bottomrule
+\end{tabular}

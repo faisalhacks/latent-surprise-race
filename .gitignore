@@ -3,9 +3,11 @@ __pycache__/
 data/
 results/
 .pytest_cache/
-paper/main.pdf
 paper/main.log
 paper/main.blg
 paper/main.aux
 paper/main.out
 paper/main.bbl
+
+# the draft PDF is committed deliberately: the handoff links to it
+!paper/main.pdf

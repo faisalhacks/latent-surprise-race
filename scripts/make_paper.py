@@ -167,6 +167,60 @@ def pilot_macros(pilot_dir: str = None) -> None:
     print("pilot: {} / {} clips ({})".format(total, target, state))
 
 
+PREC_PRETTY = {"loss_L0": r"$\mathcal{L}_0$", "probe_A": r"probe A",
+               "probe_B": r"probe B", "probe_C": r"probe C"}
+
+
+def precision_table(path: str = None) -> None:
+    """Emit the fp32 / bf16 / fp16 comparison, if a precision check was run.
+
+    This is a real measurement on real weights, so it is reported; it is not a
+    registered outcome, because it says nothing about the hypothesis.
+    """
+    p = path or os.path.join(ROOT, "results", "precision_check.json")
+    if not os.path.exists(p):
+        _w("table_precision.tex",
+           r"\begin{center}\textsc{pending} --- no precision check has been run."
+           r"\end{center}")
+        _w("precision_macros.tex",
+           "\n".join(r"\newcommand{\%s}{%s}" % (k, PENDING) for k in
+                     ("lgwPrecWorstProbeBf", "lgwPrecWorstLossBf",
+                      "lgwPrecRatioBf")))
+        return
+    with open(p, encoding="utf-8") as f:
+        r = json.load(f)
+
+    L = [r"\begin{tabular}{llrrr}", r"\toprule",
+         r"Precision & Monitor & median rel.\ err. & max rel.\ err. & Spearman \\",
+         r"\midrule"]
+    for prec in ("bf16", "fp16"):
+        if prec not in r:
+            continue
+        for m in ("loss_L0", "probe_A", "probe_B", "probe_C"):
+            d = r[prec][m]
+            L.append(r"{} & {} & {:.2f}\% & {:.2f}\% & {:.4f} \\".format(
+                prec, PREC_PRETTY[m], 100 * d["median_rel_err"],
+                100 * d["max_rel_err"], d["spearman"]))
+        L.append(r"\midrule")
+    L[-1] = r"\bottomrule"
+    L.append(r"\end{tabular}")
+    _w("table_precision.tex", "\n".join(L))
+
+    bf = r.get("bf16", {})
+    worst_probe = max((bf[m]["median_rel_err"] for m in
+                       ("probe_A", "probe_B", "probe_C") if m in bf),
+                      default=float("nan"))
+    loss_err = bf.get("loss_L0", {}).get("median_rel_err", float("nan"))
+    ratio = worst_probe / loss_err if loss_err else float("nan")
+    _w("precision_macros.tex", "\n".join([
+        r"\newcommand{\lgwPrecWorstProbeBf}{%.2f\%%}" % (100 * worst_probe),
+        r"\newcommand{\lgwPrecWorstLossBf}{%.2f\%%}" % (100 * loss_err),
+        r"\newcommand{\lgwPrecRatioBf}{%.0f}" % ratio,
+    ]))
+    print("precision table written (bf16 worst probe {:.2%} vs loss {:.2%}, "
+          "ratio {:.0f}x)".format(worst_probe, loss_err, ratio))
+
+
 def _w(name: str, body: str) -> None:
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
@@ -337,6 +391,7 @@ def main() -> None:
     path = find_results(args[0] if args else None)
     os.makedirs(OUT, exist_ok=True)
     pilot_macros()
+    precision_table()
     if path is None:
         write_pending()
         return

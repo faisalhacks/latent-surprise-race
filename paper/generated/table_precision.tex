@@ -1,0 +1,15 @@
+\begin{tabular}{llrrr}
+\toprule
+Precision & Monitor & median rel.\ err. & max rel.\ err. & Spearman \\
+\midrule
+bf16 & $\mathcal{L}_0$ & 0.23\% & 1.70\% & 0.9823 \\
+bf16 & probe A & 4.55\% & 19.87\% & 0.9863 \\
+bf16 & probe B & 6.74\% & 34.05\% & 0.9769 \\
+bf16 & probe C & 1.58\% & 2.95\% & 0.9983 \\
+\midrule
+fp16 & $\mathcal{L}_0$ & 0.12\% & 0.73\% & 0.9926 \\
+fp16 & probe A & 1.61\% & 10.04\% & 0.9967 \\
+fp16 & probe B & 1.48\% & 8.18\% & 0.9981 \\
+fp16 & probe C & 0.48\% & 1.56\% & 0.9971 \\
+\bottomrule
+\end{tabular}

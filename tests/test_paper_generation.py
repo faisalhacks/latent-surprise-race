@@ -85,16 +85,34 @@ def test_pending_removes_a_stale_survival_figure(tmp_path, monkeypatch):
 
 
 def test_pending_macros_cover_everything_main_tex_uses(tmp_path, monkeypatch):
-    """Every \\lgw macro referenced by the manuscript must exist in PENDING mode.
+    """Every \\lgw macro the manuscript uses must be defined with no results.
 
     Otherwise the draft fails to compile exactly when there are no results,
     which is when it is most likely to be built.
+
+    This runs the generators that always run, rather than maintaining a list of
+    exceptions -- an exclusion list silently rots every time a generator is
+    added, and the point of the test is to catch exactly that.
     """
+    import importlib.util
     import re
+
     monkeypatch.setattr(mp, "OUT", str(tmp_path))
     mp.write_pending()
-    defined = set(re.findall(r"\\newcommand\{\\(lgw\w+)\}",
-                             (tmp_path / "macros.tex").read_text()))
+    mp.pilot_macros(pilot_dir=str(tmp_path / "no_such_dir"))
+    mp.precision_table(path=str(tmp_path / "no_such_file.json"))
+
+    spec = importlib.util.spec_from_file_location(
+        "make_figures", os.path.join(HERE, "..", "scripts", "make_figures.py"))
+    mf = importlib.util.module_from_spec(spec)
+    sys.modules["make_figures"] = mf
+    spec.loader.exec_module(mf)
+    monkeypatch.setattr(mf, "OUT", str(tmp_path))
+    mf.dataset_macros(n=2)        # tiny: we only need the macro names
+
+    defined = set()
+    for f in tmp_path.glob("*.tex"):
+        defined |= set(re.findall(r"\\newcommand\{\\(lgw\w+)\}", f.read_text()))
     used = set()
     paper = os.path.join(HERE, "..", "paper")
     for root, _, files in os.walk(paper):
@@ -104,13 +122,7 @@ def test_pending_macros_cover_everything_main_tex_uses(tmp_path, monkeypatch):
             if fn.endswith(".tex"):
                 with open(os.path.join(root, fn), encoding="utf-8") as f:
                     used |= set(re.findall(r"\\(lgw[A-Za-z]+)", f.read()))
-    # Macros emitted by other generators, which always run regardless of
-    # whether any results exist: dataset stats from make_figures.py, and pilot
-    # clip counts from pilot_macros().
-    used -= {"lgwOccFullyHidden", "lgwOccPartial", "lgwOccFullyHiddenClips",
-             "lgwOccluderArea", "lgwHasResults",
-             "lgwPilotCalib", "lgwPilotEval", "lgwPilotAnom",
-             "lgwPilotTotal", "lgwPilotTarget", "lgwPilotState"}
+    used -= {"lgwHasResults"}     # set by write_pending as a \newcommand too
     missing = used - defined
     assert not missing, "macros used by the paper but missing in PENDING mode: {}".format(
         sorted(missing))

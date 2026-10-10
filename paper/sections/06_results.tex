@@ -68,6 +68,45 @@ weights are reported in Section~\ref{sec:limitations} as risks to the registered
 run's power. They concern the \emph{magnitude and dispersion} of monitor scores,
 not detection latency, and they are not results about the hypothesis.
 
+\subsection{Numerical precision is not neutral between the two monitor families}
+\label{sec:precision}
+
+This is a measurement on the real pretrained weights, and it is reported
+because it is a real result --- but it says nothing about the hypothesis, so it
+is not a registered outcome.
+
+We compared fp32, bf16 and fp16 on the actual monitor values
+(Table~\ref{tab:precision}). Reduced precision does not degrade the monitors
+evenly. Under bf16, the worst geometry probe shifts by a median
+\lgwPrecWorstProbeBf{} while $\mathcal{L}_0$ shifts by \lgwPrecWorstLossBf{} ---
+roughly a factor of \lgwPrecRatioBf{}. The mechanism is not subtle:
+$\mathcal{L}_0$ is a mean over $H'W' \times d$ values, so independent rounding
+error averages away, whereas probe~A is a second difference of nearby vectors
+and probe~B a cosine against a mean of five nearly identical vectors. Both
+amplify exactly the error the loss suppresses.
+
+The consequence matters for anyone running this comparison. Choosing a reduced
+precision for throughput would have handicapped the probes while leaving the
+baseline essentially intact --- a \emph{directional} bias against the
+hypothesis, introduced by what looks like an implementation detail and
+invisible in any aggregate accuracy check. We therefore run the registered
+experiment in fp32, as pre-registered, at roughly $2.9\times$ the cost per clip.
+
+We flag this as a general hazard: in any comparison between a pooled output
+error and a higher-order statistic of internal states, the two sides have
+different numerical conditioning, and the precision setting is part of the
+experimental design rather than a free parameter.
+
+\begin{table}[t]
+\centering
+\small
+\input{generated/table_precision}
+\caption{Relative error against fp32 on the real pretrained weights, measured
+on the monitor values themselves. Spearman is rank correlation with the fp32
+ordering. The loss is robust; the geometry probes are not.}
+\label{tab:precision}
+\end{table}
+
 \subsection{What the harness does produce}
 
 The apparatus itself is verified, and these are results about the protocol

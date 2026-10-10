@@ -5,7 +5,8 @@ title: >-
 message: If you use this harness or benchmark, please cite it.
 type: software
 authors:
-  - name: "Faisal Parvez"
+  - given-names: "Mohammed Faisal"
+    family-names: "Parvez"
 abstract: >-
   A pre-registered evaluation harness testing whether the internal
   representation geometry of a frozen video world model crosses an alarm

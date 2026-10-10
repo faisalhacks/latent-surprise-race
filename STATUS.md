@@ -25,7 +25,7 @@ whatever you are willing to spend.
 | `workspace-A` | refused: "add a payment method" |
 | `workspace-B` | refused |
 | `workspace-C` | refused |
-| `workspace-D` | **works** (T4, L4, A10G, L40S, A100-40GB all available) -- but the user has ruled it out |
+| `workspace-D` | **works** (T4, L4, A10G, L40S, A100-40GB all available) -- ruled out by the owner |
 
 So the run needs either a payment method on a permitted workspace, or
 permission for one that already has it. Nothing in the code is waiting.

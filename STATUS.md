@@ -1,5 +1,35 @@
 # Status: 2026-10-07
 
+## Compute required to finish
+
+Small. It was always a ~$2 experiment.
+
+| job | work | GPU time | cost |
+|---|---|---|---|
+| precision check (fp32 / bf16 / fp16) | 4 clips x 3 precisions | ~3 min | ~$0.05 |
+| **Phase 2, registered** (1200 clips @ 256 px) | 54k encoder + 18k predictor forwards, ~1.0e17 FLOPs | ~1.0 GPU-h (A10G fp32) or ~0.25 (L40S bf16) | **~$0.50-1.00** |
+| Phase 4.1 VideoMAE (only if the gate passes) | ViT-B, ~4x cheaper than ViT-L | ~0.3 GPU-h | ~$0.30 |
+| Phase 4.3 mechanistic | runs on saved latents | CPU, free | $0 |
+
+**Total: ~1.5 GPU-hours, about $1.50.** With 24-container fan-out the Phase 2
+wall-clock is ~5-10 minutes. Any of A10G / L4 / L40S is fine.
+
+## Modal accounts: which ones can actually run this
+
+Checked on 2026-10-10. The gate is **per-workspace billing**, not budget --
+Modal refuses GPU functions outright on a workspace with no payment method,
+whatever you are willing to spend.
+
+| profile | GPU access |
+|---|---|
+| `workspace-A` | refused: "add a payment method" |
+| `workspace-B` | refused |
+| `workspace-C` | refused |
+| `workspace-D` | **works** (T4, L4, A10G, L40S, A100-40GB all available) -- but the user has ruled it out |
+
+So the run needs either a payment method on a permitted workspace, or
+permission for one that already has it. Nothing in the code is waiting.
+
 ## Summary
 
 The harness, the benchmark, the adapter contract and the manuscript are

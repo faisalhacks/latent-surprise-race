@@ -86,13 +86,19 @@ def completed_clip_ids(split: str) -> set:
 def main() -> None:
     from transformers import VJEPA2Model
 
-    a = sys.argv[1:]
+    # --analyse-only merges and analyses whatever is already on disk. Because
+    # controls run first, a partial run becomes a real (smaller) experiment as
+    # soon as they finish, instead of being worthless until the last clip.
+    analyse_only = "--analyse-only" in sys.argv
+    a = [x for x in sys.argv[1:] if not x.startswith("--")]
     n_per_cond = int(a[0]) if len(a) > 0 else 40
     n_calib = int(a[1]) if len(a) > 1 else 70
     n_eval = int(a[2]) if len(a) > 2 else 50
 
     torch.set_num_threads(os.cpu_count() or 8)
     os.makedirs(os.path.join(OUT, "chunks"), exist_ok=True)
+    if analyse_only:
+        return merge_and_analyse()
     jobs = plan(n_per_cond, n_calib, n_eval)
     total = sum(len(s) for _, s in jobs)
     print("PILOT res={} t_ctx={} clips={} chunks={}".format(
@@ -135,7 +141,10 @@ def main() -> None:
             n_done + 1, len(todo), split, el,
             rate * (len(todo) - n_done - 1) / 3600), flush=True)
 
-    # ---- merge and analyse ----
+    return merge_and_analyse()
+
+
+def merge_and_analyse():
     import glob
     scores = {}
     for split in ("anomaly", "control_calib", "control_eval"):

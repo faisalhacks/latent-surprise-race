@@ -45,9 +45,20 @@ markers rather than placeholder values.
 
 ## The registered experiment
 
-**Not run.** It needs ~1 GPU-hour on a Modal workspace with billing enabled.
-See `docs/PARKED_EXPERIMENTS.md` (entry P1) for the exact launch command, and
-`CLOSEOUT.md` for why it is blocked.
+**Run on 2026-10-10** (tag `phase2-20261010-174237`): Modal, NVIDIA A10G,
+fp32/TF32, profile `riyann00b`, 1200 clips, 7,554 GPU-seconds (2.10 GPU-hours),
+963 s wall. To reproduce it:
+
+```bash
+modal run modal_app.py --precision-check-only   # optional, ~$0.05
+modal run modal_app.py --chunk 50               # the registered run, fp32
+modal volume get lgw-results <tag>/ ./results
+```
+
+Note that `modal run` performs the merge, the frozen analysis and the Phase 3
+gate as the final step of the same entrypoint; there is no separate analysis
+command to defer. If you need the extraction without the analysis, call
+`extract_chunk` directly and skip `analyse_remote`.
 
 ## The exploratory pilot
 

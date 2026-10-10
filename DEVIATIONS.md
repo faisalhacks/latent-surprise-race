@@ -55,6 +55,58 @@ pre-registration SHA and destroy the freeze, so it was not done.
 | 2026-10-10 | A second study was **drafted** (`prereg/v2_compression_DRAFT.md`) on compression and detection latency. It is explicitly **not frozen**, its equivalence margins are left as TODO, and no data may be collected under it. | Drafting a follow-up does not amend v1. Recorded here so the existence and date of the draft are on the record, and so it cannot later be presented as having been registered earlier than it was. |
 | 2026-10-10 | The paper is being completed as a protocol-and-pitfalls contribution with results reported as pending. | Writing up the methodology while the registered result is outstanding is legitimate; presenting anything in place of that result would not be. No placeholder, estimated or invented numbers appear anywhere in the manuscript. |
 
+## Registered run executed (2026-10-10)
+
+| | |
+|---|---|
+| Launched | 2026-10-10 17:42:37 IST (run tag `phase2-20261010-174237`) |
+| Compute | Modal, **NVIDIA A10G**, fp32/TF32 |
+| Modal profile | `riyann00b` |
+| Scale | 1200 clips (1000 anomalous, 100 calibration controls, 100 evaluation controls) |
+| Cost | 7,554 GPU-seconds (2.10 GPU-hours), 963 s wall across 24 containers |
+| Protocol | the frozen v1 protocol, unmodified |
+
+Two corrections to how this was initially described:
+
+**The GPU was an A10G, not a T4.** A T4 was used only for a seconds-long access
+probe to confirm the account was not payment-gated. The registered run used an
+A10G throughout, as recorded in the run tag.
+
+**The analysis was not held back.** The intent had been to publish the frozen
+pre-registration commit before any analysis ran. That did not happen:
+`modal run modal_app.py` invokes `analyse_remote` as the final step of the same
+entrypoint, so the merge, the frozen analysis and the Phase 3 gate all executed
+automatically as part of the launch, and the verdict was read. There was no
+separate analysis step to withhold.
+
+What this does and does not compromise: the pre-registration genuinely precedes
+the data and this is verifiable from the repository itself. Commit
+`033ee1ac2ca27e26bc865194b51ba146d2a3d206` is dated 2026-10-06, four days before
+the run, and the blob hash of `PREREGISTRATION.md` is `ed695cb6f45b8e31de1a22ec9a54c34271ce64a3`
+at both that commit and HEAD. What is absent is an independent, third-party
+timestamp: the freeze was not published before the result was seen, so a reader
+relying only on the public record has the author's word for the ordering rather
+than a notarised one. We record that plainly rather than implying otherwise.
+
+No threshold, metric, test, gate criterion or probe definition was altered at
+any point.
+
+## Precision choice, measured rather than assumed (2026-10-10, exploratory)
+
+Before the registered run, fp32 was compared against bf16 and fp16 on four
+clips of real weights. Reduced precision degrades the two monitor families
+asymmetrically: under bf16 the worst geometry probe shifts by a median 6.74%
+while the model's own loss shifts by 0.23%, about a factor of thirty. The loss
+is a mean over 256x1024 values so rounding error averages out, whereas probe A
+is a second difference and probe B a cosine against a mean of near-identical
+vectors.
+
+Choosing bf16 for throughput would therefore have handicapped the probes while
+leaving the baseline intact: a directional bias against the hypothesis. The
+registered run used fp32, which is what the frozen protocol already specified,
+so this is a confirmation of an existing choice and not a change to it. The
+comparison is **exploratory** and says nothing about the hypothesis.
+
 ## Terminology note (2026-10-10)
 
 The frozen v1 document names its gate criterion **"Early Warner"**. The

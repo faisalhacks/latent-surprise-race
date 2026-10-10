@@ -1,13 +1,31 @@
 # Closeout
 
-**Status: BLOCKED — compute.**
+**Status: registered run EXECUTED 2026-10-10; write-up pending.**
 
-## What is blocked
+Superseded: this document previously read BLOCKED (compute). GPU access was
+obtained on 2026-10-10 and the registered experiment ran. The history of that
+block is kept in `DEVIATIONS.md` rather than rewritten here.
 
-The registered Phase 2 experiment: 1200 clips at 256 px through frozen
-V-JEPA 2, under the protocol frozen in `PREREGISTRATION.md`.
+## The registered run
 
-## Why
+| | |
+|---|---|
+| Launched | 2026-10-10 17:42:37 IST, run tag `phase2-20261010-174237` |
+| Compute | Modal, NVIDIA **A10G**, fp32/TF32 (a T4 was used only for an access probe) |
+| Modal profile | `riyann00b` |
+| Scale | 1200 clips, exactly as frozen |
+| Cost | 7,554 GPU-seconds (2.10 GPU-hours), 963 s wall |
+| Protocol | frozen v1, unmodified |
+
+Analysis artifacts (`results.json`, `REPORT.md`, survival curves) were produced
+automatically by the same entrypoint and are on disk. **Their contents are
+deliberately not reproduced in this document**; the write-up is pending the
+author's decision. See `DEVIATIONS.md` for why the intended
+publish-before-analysis ordering did not hold.
+
+## What was previously blocked
+
+## Why it had been blocked
 
 No GPU credit. Modal refuses GPU functions on any workspace without a payment
 method on file, and this refusal happens at app-hydration time, before any
@@ -19,7 +37,7 @@ orchestration was validated end-to-end at the full 1200-clip scale using
 randomly initialised weights, so the only step in the registered run that has
 never executed is the GPU forward itself.
 
-## Cost to unblock
+## Cost, as estimated beforehand
 
 | item | estimate |
 |---|---|
@@ -48,10 +66,11 @@ Any of A10G, L4 or L40S is sufficient.
 
 ## To close this out
 
-1. Enable billing on a Modal workspace.
-2. `modal run modal_app.py --precision-check-only`
-3. `modal run modal_app.py --chunk 50`
-4. `python scripts/make_paper.py && cd paper && tectonic main.tex`
+Steps 1-3 are done. Remaining:
+
+4. Decide whether to proceed to the write-up, then
+   `python scripts/make_paper.py` and rebuild the PDF.
+5. Run the mechanistic probe only if the gate shows a latency gap.
 
 The gate verdict is computed by code and written into the report; it is not a
 judgement call made while reading tables.

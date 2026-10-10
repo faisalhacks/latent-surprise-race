@@ -1,11 +1,18 @@
 # Parked experiments
 
-**Status: parked 2026-10-10. Nothing here runs until the repository owner says
-"credits are available, go".**
+**Status as of 2026-10-10: P1 and P2 are DONE. P3, P4 and P5 remain PARKED.**
 
-Everything below is blocked on GPU credit, not on code. Each entry is
-launch-ready: the harness, the adapters and the analysis are written, tested and
-committed. Costs are derived from a measured figure — ~86 TFLOPs per clip
+P3 (compression) additionally requires `prereg/v2_compression_DRAFT.md` to be
+completed with the owner's equivalence margins and frozen in its own commit
+before any data may be collected under it. Nothing in P3-P5 runs until the
+repository owner says so.
+
+Each remaining entry is launch-ready: the harness, the adapters and the
+analysis are written, tested and committed. P1 and P2 were blocked on GPU
+credit until 2026-10-10 and have now run; their cost estimates below are left
+as originally written so they can be compared against what the run actually
+cost (P1 estimated ~1.0 GPU-hour, actual 2.10). Costs are derived from a
+measured figure — ~86 TFLOPs per clip
 (~1.75 TFLOPs per encoder forward at 326M parameters x 2048 tokens, plus
 ~0.5 TFLOPs per predictor forward, 45 + 15 forwards per clip) — and an assumed
 ~30 TFLOPS effective on an A10G at fp32/TF32, with A10G at roughly $1.10/hour.
@@ -13,7 +20,15 @@ Treat them as estimates with maybe 50% error, not quotes.
 
 ---
 
-## P1. The registered Phase 2 experiment (highest priority)
+## P1. The registered Phase 2 experiment — **DONE, no longer parked**
+
+**Executed 2026-10-10 17:42:37 IST**, run tag `phase2-20261010-174237`: Modal,
+NVIDIA A10G, fp32/TF32, profile `riyann00b`, 1200 clips, 7,554 GPU-seconds
+(2.10 GPU-hours), 963 s wall across 24 containers. The frozen v1 protocol was
+used unmodified. Analysis artifacts exist on disk; the write-up is pending.
+The original entry is kept below as written, for the record.
+
+### P1 as originally parked
 
 **Question.** Does the geometry of a frozen V-JEPA 2's internal state cross an
 alarm threshold at a lower detection latency than the model's own prediction
@@ -45,7 +60,16 @@ are refused outright without one, independent of budget or credits.
 
 ---
 
-## P2. Precision check (run before P1 if bf16 is wanted)
+## P2. Precision check — **DONE**
+
+**Executed 2026-10-10**, before P1. Result recorded in `DEVIATIONS.md` and
+`results/precision_check.json`: reduced precision degrades the geometry probes
+roughly thirty times more than it degrades the model's own loss, so bf16 would
+have biased the comparison rather than merely speeding it up. The registered
+run used fp32. **Exploratory**; it says nothing about the hypothesis. The
+original entry is kept below as written.
+
+### P2 as originally parked
 
 **Question.** Does reduced precision preserve the probe values, in particular
 probe A? It is a second difference of nearby vectors, `||z_t - 2z_{t-1} +
@@ -136,8 +160,11 @@ python scripts/run_mechanistic.py results/<tag>
 
 ---
 
-## Not parked: what is already finished
+## The exploratory CPU pilot: stopped, superseded
 
-The CPU pilot at 128 px is exploratory, free, and allowed to finish. It is not
-the registered experiment and is reported as such everywhere. See
-`STATUS.md` for its live clip counts.
+The 128 px CPU pilot was a stand-in for P1 while GPU access was unavailable. It
+was **stopped at 138 of 280 clips** on 2026-10-10 once the registered run became
+possible. Its control splits never completed, so no threshold was ever
+calibrated and **no outcome was computed from it**. It is not the registered
+experiment and is reported as such everywhere. See
+`exploratory_pilot_128px/README.md`.

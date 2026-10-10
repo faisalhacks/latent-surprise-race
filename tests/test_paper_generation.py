@@ -71,6 +71,19 @@ def test_latex_escaping_of_monitor_names():
     assert mp.esc("a&b") == r"a\&b"
 
 
+def test_pending_removes_a_stale_survival_figure(tmp_path, monkeypatch):
+    """A figure must not outlive the run it came from.
+
+    Otherwise a survival curve from an earlier run sits in the PDF next to
+    PENDING tables and reads as a result.
+    """
+    monkeypatch.setattr(mp, "OUT", str(tmp_path))
+    stale = tmp_path / "fig_survival.png"
+    stale.write_bytes(b"not really a png")
+    mp.write_pending()
+    assert not stale.exists()
+
+
 def test_pending_macros_cover_everything_main_tex_uses(tmp_path, monkeypatch):
     """Every \\lgw macro referenced by the manuscript must exist in PENDING mode.
 

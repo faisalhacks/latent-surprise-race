@@ -116,6 +116,13 @@ def write_pending() -> None:
        "No inference run has been analysed yet, so this section is empty by "
        "construction rather than by omission. Running the harness repopulates "
        "every number in it automatically.")
+    # A figure must never outlive the results it came from. Without this, a
+    # survival curve from an earlier run sits in the PDF beside PENDING tables
+    # and reads as a result.
+    stale = os.path.join(OUT, "fig_survival.png")
+    if os.path.exists(stale):
+        os.remove(stale)
+        print("removed stale fig_survival.png from a previous run")
     print("no results found -> wrote PENDING placeholders")
 
 

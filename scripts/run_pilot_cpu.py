@@ -94,7 +94,7 @@ def main() -> None:
     torch.set_num_threads(os.cpu_count() or 8)
     os.makedirs(os.path.join(OUT, "chunks"), exist_ok=True)
     jobs = plan(n_per_cond, n_calib, n_eval)
-    total = sum(len(s) for _, s, _ in jobs)
+    total = sum(len(s) for _, s in jobs)
     print("PILOT res={} t_ctx={} clips={} chunks={}".format(
         PILOT_RES, C.T_CTX, total, len(jobs)), flush=True)
 

@@ -1,4 +1,4 @@
-% Does Latent Geometry Warn Before Prediction Error?
+% Measuring Detection Latency in Video World Models
 %
 % Build:  tectonic paper/main.tex      (or: pdflatex twice)
 % Numbers: every figure, table and numeric sentence is generated into
@@ -21,58 +21,70 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{natbib}
 \bibliographystyle{plainnat}
+\usepackage{draftwatermark}
+\SetWatermarkText{DRAFT --- results pending}
+\SetWatermarkScale{0.28}
+\SetWatermarkColor[gray]{0.92}
 
 \captionsetup{font=small,labelfont=bf}
 \newcommand{\dt}{\Delta t}
-\newcommand{\RMTA}{\mathrm{RMTA}}
+\newcommand{\RMTA}{\ensuremath{\mathrm{RMDL}}}   % restricted mean detection latency
 \newcommand{\code}[1]{\texttt{\small #1}}
+\newcommand{\pending}{\textcolor{red!70!black}{\textbf{[pending registered run]}}}
 
 \input{generated/macros}
 \input{generated/dataset_macros}
+\input{generated/pilot_macros}
 
-\title{\bfseries Does Latent Geometry Warn Before Prediction Error?\\
-A Pre-Registered, Leakage-Free Test on Video World Models}
+\title{\bfseries Measuring Detection Latency in Video World Models:\\
+A Pre-Registered Protocol and Its Failure Modes\\[4pt]
+\large\normalfont\textcolor{red!70!black}{DRAFT --- results pending registered run}}
 \author{Anonymous Author(s)}
 \date{}
 
 \begin{document}
 \maketitle
 
-\ifnum\lgwHasResults=0
 \begin{center}
-\fcolorbox{red!60!black}{red!5}{\parbox{0.92\linewidth}{\small
-\textbf{DRAFT --- results pending.} No inference run has been analysed yet, so
-every number in this manuscript renders as \textsc{pending}. This is enforced by
-the build: \code{scripts/make\_paper.py} emits placeholders rather than
-plausible-looking values, so the draft cannot be mistaken for a finished
-result. Running the harness repopulates all tables, figures and numeric prose.}}
+\fcolorbox{red!60!black}{red!5}{\parbox{0.93\linewidth}{\small
+\textbf{Results pending.} The registered experiment has not been run: it
+requires GPU credit that was not available, not any missing code. The harness is
+complete, tested and launch-ready at an estimated one GPU-hour. Every place a
+registered number would appear is marked \pending{} and no placeholder,
+estimated or illustrative value appears anywhere in this manuscript. This
+version contributes the protocol, the benchmark and the failure modes we found
+while building them.}}
 \end{center}
 \vspace{0.6em}
-\fi
 
 \begin{abstract}
 A video world model that is about to be surprised might reveal it in the
-\emph{geometry} of its internal states before its prediction error rises. If
-true, that would matter: prediction error is the standard online anomaly signal
-for model-based control, and any earlier signal buys reaction time. We test the
-claim directly on a frozen V-JEPA 2, with a protocol registered before any code
-was written. Three online geometry probes --- trajectory curvature,
-representational distance, and covariance shift --- are compared against two
-prediction-error baselines, one of which is the model's \emph{own} pretraining
-objective evaluated causally. Detection is scored as time-to-alarm under
-survival analysis, with thresholds calibrated on held-out control clips so that
-every monitor is matched on false alarms.
+\emph{geometry} of its internal states before its prediction error rises. The
+claim is worth testing: prediction error is the established signal by which
+these models detect physical violations \citep{garrido2025intuitive}, and
+representation geometry is known to carry physical plausibility on its own
+\citep{interno2026geophys}. What is not established is which of the two crosses
+an alarm threshold sooner --- and that comparison turns out to be unusually easy
+to decide in advance by accident.
 
-Our contribution is as much the harness as the answer. Getting this comparison
-right turns out to be easy to get wrong in three specific ways, each of which
-silently favours one side: a prediction loss whose context has already attended
-to the frames it predicts; thresholds fitted on the clips they are evaluated on;
-and a censored median that cannot distinguish any two monitors once fewer than
-half the episodes alarm. We make each failure mode structurally impossible or
-visible, and release the result as a model-agnostic benchmark that a new
-architecture joins in roughly twenty-five lines.
-On the registered experiment the verdict is \lgwVerdict, with early warners:
-\lgwEarlyWarners.
+We present a pre-registered, leakage-free protocol for measuring \emph{detection
+latency} in frozen video world models, a synthetic benchmark of four anomaly
+families injected at a known frame, and a model-agnostic adapter contract that a
+new architecture joins in roughly twenty-five lines and is then held to by a
+parameterised test suite. Detection latency is scored as a survival quantity,
+with thresholds calibrated on held-out controls so every monitor is matched on
+false alarms.
+
+Our contribution here is the apparatus and five concrete failure modes we hit
+while building it: a prediction-error baseline whose context has already
+attended to the frames it predicts, making it unfairly strong; a registered
+primary metric that is mathematically unable to fire under heavy censoring; a
+baseline whose dynamic range is small enough that it may alarm at chance, which
+would make beating it vacuous; an occlusion condition that measures object
+permanence rather than partial corruption; and a second architecture that leaks
+by an entirely different route. Each is either made structurally impossible,
+tested adversarially, or surfaced as a reported diagnostic. The registered
+result itself is \pending.
 \end{abstract}
 
 \input{sections/01_intro}
@@ -83,6 +95,7 @@ On the registered experiment the verdict is \lgwVerdict, with early warners:
 \input{sections/06_results}
 \input{sections/07_reuse}
 \input{sections/08_limitations}
+\input{sections/10_future}
 \input{sections/09_conclusion}
 
 \bibliography{refs}

@@ -1,58 +1,90 @@
 \section{Limitations}
+\label{sec:limitations}
 
-\paragraph{One architecture, one synthetic domain.}
-The registered experiment covers frozen V-JEPA 2 on bouncing discs. Whether any
-effect is a property of joint-embedding predictive architectures, of
-transformers over video generally, or of this particular scene is not decided
-by this experiment, and we do not claim otherwise. A VideoMAE adapter exists and
-passes the contract, but \emph{has not been run}: an adapter is a capability,
-not a result, and we are careful not to present one as the other. A
-physics-simulator domain is the other obvious next step.
+\paragraph{No registered result yet.}
+The first and largest limitation is that the central question is unanswered.
+This version contributes a protocol, a benchmark and a set of documented failure
+modes; it does not contribute a measurement of detection latency in V-JEPA 2.
+Until the registered run executes, every claim here is about the apparatus.
+
+\paragraph{Sudden onset measures latency, not anticipation.}
+Anomalies are injected abruptly at a known frame, so a monitor can only react to
+something that has already happened. This design cannot distinguish a monitor
+that detects quickly from one that anticipates, and we make no anticipation
+claim. Work on \emph{anticipated} latents \citep{samad2026puls} addresses the
+other regime, where the quantity of interest is a model's forward prediction
+rather than its reaction. A gradual-onset benchmark would be needed to speak to
+anticipation, and we do not have one.
+
+\paragraph{Synthetic clips.}
+A single disc on a black background at $64 \times 64$ is a deliberately
+controlled setting: it makes the injection frame exact, the pre-injection
+histories matched, and the ground truth available. It is also nothing like
+deployment. Scene complexity, texture, camera motion, multiple objects and
+natural statistics are all absent, and any result here is a statement about this
+regime only.
+
+\paragraph{One model family.}
+The registered experiment covers frozen V-JEPA 2. A VideoMAE adapter exists and
+passes the contract suite, but \emph{has not been run} --- an adapter is a
+capability, not a result, and we are careful not to present one as the other.
+Whether any effect is a property of joint-embedding predictive architectures, of
+video transformers generally, or of one checkpoint is not decided here.
+
+\paragraph{The occlusion family measures object permanence.}
+Our occlusion condition hides the disc completely in \lgwOccFullyHidden{} of
+post-injection frames, so it asks whether the representation registers that a
+tracked object has vanished. \citet{xie2026tracking} show that this regime
+dissociates sharply inside V-JEPA 2: the predictor forgets moving hidden objects
+within about $0.3$~seconds while the encoder retains such information for far
+longer. Since our geometry probes read pooled encoder states and
+$\mathcal{L}_0$ reads the predictor, that dissociation is a plausible confound
+for this family specifically, and results on it should be interpreted against
+their finding rather than as a clean test of the hypothesis.
 
 \paragraph{Mean pooling discards where the anomaly is.}
 Both the latent state and the $\mathcal{L}_0$ loss average over the spatial
-token grid --- $1024$ dimensions for the latent, $H'W'd$ values for the loss.
-Our anomalies are spatially local, so averaging dilutes them. This is a
-sensitivity cost borne by both monitor families, but not necessarily
-symmetrically, and it is the most likely explanation if $\mathcal{L}_0$ turns
-out to have little dynamic range. Max-pooling, or restricting the loss to tokens
-whose content actually changed, are natural variants we did not register.
+token grid. Our anomalies are spatially local, so averaging dilutes them. On two
+clips of real pretrained weights, $\mathcal{L}_0$ spanned only about $\pm 2\%$,
+which is the observation behind the lift diagnostic: if that holds at scale,
+$\mathcal{L}_0$ may alarm at chance and comparisons against it would be vacuous.
+Max-pooling, or a loss restricted to tokens whose content actually changed, are
+natural variants we did not register.
+
+\paragraph{Probes A and C may carry per-clip offsets.}
+In the same two-clip check, probe~C differed by roughly $8\%$ between clips
+while moving only a few percent \emph{within} each. With thresholds pooled
+across clips, a monitor whose between-clip variance exceeds its within-clip
+signal behaves partly as a per-clip constant rather than a change detector.
+Probe~B, scale-invariant by construction, showed no comparable offset.
+Standardising each probe against its own pre-injection frames is the standard
+remedy, but it cannot be applied uniformly here because probe~C is undefined
+before frame~15 and so has no within-clip reference window. We flag this rather
+than patch it: changing a frozen probe definition after seeing data is exactly
+what pre-registration exists to prevent.
 
 \paragraph{Pooled thresholds assume stationarity in $t$.}
 For $t<15$ the causal window is left-padded by repeating $f_0$, so warm-up
-latents are computed on partly synthetic windows. The score distribution is
-therefore mildly $t$-dependent, which widens the pooled calibration
-distribution and costs sensitivity. Controls and anomalies pass through an
-identical pipeline, so this cannot manufacture a difference \emph{between}
-monitors. A per-frame threshold would be the cleaner estimator.
+latents are computed on partly synthetic windows and the score distribution is
+mildly $t$-dependent. Controls and anomalies pass through an identical pipeline,
+so this cannot manufacture a difference \emph{between} monitors, but it widens
+the pooled calibration distribution and costs sensitivity. A per-frame threshold
+would be the cleaner estimator.
 
-\paragraph{Probes A and C are not scale-invariant, and may carry per-clip
-offsets.} In a preliminary two-clip check on real weights, probe~C differed by
-roughly $8\%$ between clips while moving only a few percent \emph{within} each.
-With a threshold pooled across clips, a monitor whose between-clip variance
-exceeds its within-clip signal behaves partly as a per-clip constant rather than
-as a change detector. Probe~B, scale-invariant by construction, showed no
-comparable offset. Standardising each probe against its own pre-injection frames
-is the standard remedy; it cannot be applied uniformly here because probe~C is
-undefined before frame $15$ and so has no within-clip reference window. We flag
-this rather than patch it, because changing a frozen probe definition after
-seeing data is exactly what pre-registration exists to prevent.
-
-\paragraph{$\dt$ is quantised by the tubelet.}
-Since $z_t$ summarises frames $(t{-}1,t)$, latencies should not be read as
+\paragraph{Latency is quantised by the tubelet.}
+Since $z_t$ summarises frames $(t-1,t)$, latencies should not be read as
 single-frame reaction times. Both monitor families inherit the same
-quantisation, so the comparison is unaffected, but the absolute numbers are
-coarser than the units suggest.
+quantisation, so comparisons stay fair, but absolute numbers are coarser than
+the units suggest.
 
 \paragraph{The log-rank test is mis-specified here.}
-Both arms come from the same clips. We report it because it is the standard
-censoring-aware two-sample test and its agreement or disagreement with the
-paired analyses is informative, but the paired Wilcoxon and the paired cluster
-bootstrap are the tests that respect the design.
+Both arms come from the same clips, violating its independence assumption. It is
+reported as corroborative only; the paired Wilcoxon and the paired cluster
+bootstrap respect the design.
 
-\paragraph{A negative result would be about these probes, not about geometry.}
+\paragraph{A null result would be about these probes.}
 If no probe clears the gate, the honest conclusion is that \emph{these three
-second-order summaries of a mean-pooled latent} do not warn earlier than
-prediction error on \emph{this} benchmark --- not that no geometric signal
-exists. The space of candidate probes is large and we tested three fixed ones,
-chosen in advance precisely so that we could not search it.
+second-order summaries of a mean-pooled latent} are not faster than prediction
+error on \emph{this} benchmark --- not that no geometric signal exists. The
+space of candidate probes is large; we fixed three in advance precisely so we
+could not search it.

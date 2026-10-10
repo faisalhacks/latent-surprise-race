@@ -6,7 +6,7 @@
 The protocol was frozen on 2026-10-06 before any code was written. It fixes:
 the dataset (resolution, length, injection frame, the four anomaly definitions,
 the control split), the five monitors and their closed forms, the threshold
-rule, the time-to-alarm metric, the statistical tests, the multiplicity
+rule, the detection latency metric, the statistical tests, the multiplicity
 correction, and the decision gate with its termination branch. The full text
 ships with the repository.
 
@@ -23,7 +23,7 @@ makes $g \to -g_0$ well defined.
 
 \item[Friction with no observable effect.] A restitution change applied only at
 collisions may not manifest before the evaluation window closes, leaving
-time-to-alarm undefined on a substantial fraction of clips. Resolved by applying
+detection latency undefined on a substantial fraction of clips. Resolved by applying
 a per-frame drag in addition to the restitution change.
 
 \item[A per-frame latent under a two-frame tubelet.] V-JEPA 2 has no
@@ -39,7 +39,7 @@ and whose final tubelet spans $(t{-}1,t)$.
 \item The Wilcoxon tail was fixed as one-sided primary, with the two-sided value
 always reported. The hypothesis is directional, and the tail had to be fixed
 before seeing data.
-\item Two secondary analyses were registered: the restricted mean time-to-alarm
+\item Two secondary analyses were registered: the restricted mean detection latency
 with a paired cluster bootstrap, and a clip-matched $5\%$ false-alarm-rate
 threshold regime. Both weaknesses follow from the \emph{definition} of the
 primary metric rather than from any observed result --- a censored median is
@@ -53,11 +53,32 @@ $5$-fold cross-fitting, so that its own threshold is not optimistic.
 \paragraph{After a two-clip correctness check on real weights.}
 The lift column, the at-chance flag and the \textsc{vacuous} marker were added.
 What had been observed at that point was score \emph{magnitude} --- that
-$\mathcal{L}_0$ spanned about $\pm2\%$ --- and not any time-to-alarm, gate
+$\mathcal{L}_0$ spanned about $\pm2\%$ --- and not any detection latency, gate
 outcome or effect direction. No threshold, metric, test or gate criterion was
 altered; the addition only makes an existing failure mode visible in the report.
 We record the provenance here rather than omitting it, so that a reader can
 judge the timing for themselves.
+
+\subsection{Parking, 2026-10-10}
+
+The registered experiment is \textbf{parked, not amended or cancelled}. No data
+has been collected under the frozen protocol, which remains in force and
+untouched. The reason is access to GPU credit, not anything about the science or
+the code: the run is launch-ready and estimated at about one GPU-hour. It is
+recorded, with its exact launch command, in the repository's parked-experiment
+register.
+
+A second study on compression and detection latency has been \emph{drafted}
+(Section~\ref{sec:future}). That draft is explicitly not frozen, its equivalence
+margins are left blank as a TODO, and no data may be collected under it. We
+record its existence and date here so that it cannot later be presented as
+having been registered earlier than it was.
+
+The manuscript uses ``detection latency'' where the frozen document names its
+gate criterion ``Early Warner''. Only the wording in the paper differs; the
+criterion itself is unchanged. We avoid the original phrase because the
+benchmark injects anomalies abruptly, so the experiment measures reaction time
+and not anticipation.
 
 \subsection{Falsification}
 

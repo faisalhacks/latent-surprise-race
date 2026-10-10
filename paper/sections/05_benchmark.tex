@@ -1,4 +1,5 @@
 \section{Benchmark}
+\label{sec:benchmark}
 
 \begin{figure}[t]
 \centering
@@ -26,7 +27,7 @@ short latency.
 \item[friction] per-frame velocity retention $0.8^{1/5}$ and bounce restitution
 $0.8$. Applied per frame rather than only at collisions, so the effect is
 observable from the first post-injection frame; a collision-only version would
-leave time-to-alarm undefined on clips with no bounce in the window.
+leave detection latency undefined on clips with no bounce in the window.
 \item[occlusion] a static black square of $29.9\%$ frame area, anchored on the
 disc's path.
 \item[frame drop] for underlying frames $15..22$, every other frame is not

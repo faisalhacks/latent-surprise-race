@@ -104,9 +104,13 @@ def test_pending_macros_cover_everything_main_tex_uses(tmp_path, monkeypatch):
             if fn.endswith(".tex"):
                 with open(os.path.join(root, fn), encoding="utf-8") as f:
                     used |= set(re.findall(r"\\(lgw[A-Za-z]+)", f.read()))
-    # dataset macros come from make_figures.py, not from the pending set
+    # Macros emitted by other generators, which always run regardless of
+    # whether any results exist: dataset stats from make_figures.py, and pilot
+    # clip counts from pilot_macros().
     used -= {"lgwOccFullyHidden", "lgwOccPartial", "lgwOccFullyHiddenClips",
-             "lgwOccluderArea", "lgwHasResults"}
+             "lgwOccluderArea", "lgwHasResults",
+             "lgwPilotCalib", "lgwPilotEval", "lgwPilotAnom",
+             "lgwPilotTotal", "lgwPilotTarget", "lgwPilotState"}
     missing = used - defined
     assert not missing, "macros used by the paper but missing in PENDING mode: {}".format(
         sorted(missing))

@@ -1,0 +1,72 @@
+{
+  "_comment": "Pre-result freeze record. Everything here was fixed before any real-weight inference was analysed. Verify against PREREGISTRATION.md, which is byte-identical to its state in the freeze commit.",
+
+  "freeze_commit_sha": "033ee1ac2ca27e26bc865194b51ba146d2a3d206",
+  "freeze_commit_date": "2026-10-06T23:09:04+05:30",
+  "freeze_commit_subject": "Phase 1-2: frozen pre-registration and leakage-free harness",
+  "protocol_document": "PREREGISTRATION.md",
+  "protocol_unmodified_since_freeze": true,
+  "protocol_verification": "diff --strip-trailing-cr <(git show 033ee1a:PREREGISTRATION.md) PREREGISTRATION.md  ->  0 differences",
+
+  "model": {
+    "checkpoint": "facebook/vjepa2-vitl-fpc64-256",
+    "hf_revision": "b3c1679b7c34d3255ef3547f27c7b226aefab26f",
+    "parameters": 326000000,
+    "frozen": true,
+    "finetuning": "none",
+    "gradients": "disabled",
+    "second_adapter_implemented_not_run": "MCG-NJU/videomae-base"
+  },
+
+  "dataset": {
+    "generator": "src/lgw/datagen.py",
+    "seed": 20261006,
+    "distributed": false,
+    "note": "Clips are regenerated deterministically from the seed; no data files are shipped.",
+    "resolution_px": 64,
+    "frames_per_clip": 30,
+    "injection_frame": 15,
+    "n_anomaly": 1000,
+    "n_per_condition": 250,
+    "n_control_calibration": 100,
+    "n_control_evaluation": 100,
+    "conditions": ["gravity_flip", "friction_high", "occlusion", "frame_drop"]
+  },
+
+  "model_input": {
+    "model_resolution_px": 256,
+    "context_frames": 16,
+    "tubelet_size": 2,
+    "upsampling": "bilinear, replicated to 3 channels"
+  },
+
+  "evaluation": {
+    "eval_window_frames": [15, 29],
+    "primary_threshold_rule": "99th percentile of control-calibration scores pooled over evaluation frames (per-frame false-alarm rate = 1%)",
+    "secondary_threshold_rule": "clip-level false-alarm rate = 5% on control-calibration clips",
+    "primary_metric": "median detection latency (right-censored at 14)",
+    "secondary_metric": "restricted mean detection latency (RMDL), area under the Kaplan-Meier curve",
+    "primary_test": "paired Wilcoxon signed-rank, one-sided, Holm-corrected across 6 comparisons",
+    "alpha": 0.01,
+    "gate": "median gain >= 1 frame against BOTH baselines AND Holm-adjusted one-sided p < 0.01"
+  },
+
+  "environment_at_freeze": {
+    "python": "3.12",
+    "torch": "2.9.1+cpu",
+    "transformers": "4.57.3",
+    "numpy": "2.2.6",
+    "scipy": "1.16.3",
+    "note": "The Modal image pins transformers==4.57.3 and installs a CUDA torch build; the adapter requires VJEPA2Model to expose its predictor and accept context_mask/target_mask."
+  },
+
+  "results_status": {
+    "registered_experiment_run": false,
+    "reason": "GPU credit unavailable; not a code blocker",
+    "estimated_cost": "~1.0 GPU-hour, ~$1.00",
+    "any_registered_outcome_numbers_produced": false,
+    "exploratory_pilot": "128px CPU pilot, incomplete, no outcome numbers computed"
+  },
+
+  "record_written": "2026-10-10"
+}

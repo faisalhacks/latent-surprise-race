@@ -1,88 +1,97 @@
 \section{Introduction}
 
 A world model deployed online has to notice when the world stops behaving as it
-expects. The usual signal is the model's own prediction error: when the next
-observation does not match the prediction, something has changed. This is the
-basis of surprise-driven monitoring in model-based control, and it has the
-appealing property of being free --- the model already computes it.
+expects. The usual signal is the model's own prediction error, and for video
+world models this is not folklore: \citet{garrido2025intuitive} show that V-JEPA
+detects violations of intuitive physics precisely by comparing the future
+against its own latent prediction of it, with ablations pointing to that
+mechanism rather than to data or scale.
 
-But prediction error is a scalar summary of a high-dimensional internal state,
-and it only moves once the mismatch has reached the output. A natural
-conjecture is that the internal state moves first: that the \emph{geometry} of
-the representation --- how sharply its trajectory bends, how far it has drifted
-from its recent history, how its local covariance has rotated --- registers the
-disturbance before the loss does. If so, a monitor reading the geometry would
-buy reaction time at no extra model cost, which is exactly the currency that
-matters for a controller that has to stop or re-plan.
+Separately, \citet{interno2026geophys} show that physical plausibility is
+implicitly encoded in the \emph{geometry} of frozen encoder embeddings. So two
+signals are available from the same frozen model, and both are known to carry
+physical information. The open question is temporal: when a disturbance arrives,
+which one crosses an alarm threshold first? If the geometry moves sooner, a
+monitor reading it buys reaction time at no extra model cost, which is the
+currency that matters for a controller that must stop or re-plan.
 
-The conjecture is plausible enough to be worth testing and vague enough to be
-easy to confirm by accident. This paper does the test properly.
+\paragraph{Terminology.}
+We say \textbf{detection latency} throughout, and avoid the phrase ``early
+warning''. Our
+benchmark injects each anomaly abruptly at a known frame, so what is measured is
+how quickly a monitor reacts to an event that has already occurred --- not
+whether it anticipates one. The distinction matters because anticipation is a
+different and stronger claim, which this design cannot support.
 
-\paragraph{What makes this hard to get right.}
-Three failure modes sit between a plausible experiment and a trustworthy one,
-and each quietly favours a predetermined answer.
+\paragraph{The comparison is easy to decide in advance by accident.}
+Four failure modes sit between a plausible experiment and a trustworthy one, and
+each quietly favours a predetermined answer.
 
 \begin{enumerate}
 \item \textbf{The baseline can cheat.} V-JEPA 2's reference implementation runs
 one encoder over the whole clip and then uses token masks to split context from
-target. The context representations have therefore already attended to the very
-frames being predicted. The resulting loss is partly self-fulfilling, which
-makes the baseline look \emph{stronger} than it is --- biasing against the
-hypothesis under test. We take context from a separate encoder pass whose final
-tubelet is overwritten, and verify by assertion that changing the predicted
-frames leaves the prediction bit-identical (Section~\ref{sec:method}).
+target, so the context representations have already attended to the frames being
+predicted. The resulting loss is partly self-fulfilling, which makes the
+baseline look \emph{stronger} than it is --- biasing against the hypothesis
+under test. We take context from a separate encoder pass whose final tubelet is
+overwritten, and verify by assertion that changing the predicted frames leaves
+the prediction bit-identical (Section~\ref{sec:method}).
 
 \item \textbf{Thresholds can leak.} An alarm threshold fitted on the same clips
-used to measure false alarms reports an optimistic operating point. We split
-control clips into disjoint calibration and evaluation sets, and cross-fit the
-learned baseline within the calibration set so that even its threshold is
-honest.
+used to measure false alarms reports an optimistic operating point. Control
+clips are split into disjoint calibration and evaluation sets, and the learned
+baseline is cross-fitted within calibration so even its own threshold is honest.
 
-\item \textbf{The headline metric can be degenerate.} Time-to-alarm is
+\item \textbf{The registered metric can be degenerate.} Detection latency is
 right-censored: clips that never alarm have no observed value. Once fewer than
-half the clips alarm inside the window, the median is pinned at the censoring
-value \emph{for every monitor}, and the comparison returns ``no difference''
-regardless of the truth. We registered the median as the primary metric anyway,
-because it was specified in advance --- and registered a censoring-robust
-secondary alongside it, before running anything, precisely so that a degenerate
-primary would be visible rather than silently null.
+half the clips alarm, the median is pinned at the censoring value \emph{for
+every monitor}, and the comparison returns ``no difference'' regardless of the
+truth. We kept the median as the registered primary because it was specified in
+advance, and registered a censoring-robust secondary alongside it before running
+anything, so a degenerate primary is visible rather than silently null.
+
+\item \textbf{The verdict can be vacuous.} If the prediction-error baseline does
+not detect the anomalies at all --- if its detection rate equals its own
+false-alarm rate --- then ``geometry is faster'' is true in the way that
+anything is faster than never. This is not hypothetical:
+\citet{pavuluri2026asleep} report exactly this collapse for a V-JEPA-based
+novelty signal, which looked effective across datasets but fell to chance within
+one. We therefore report a \emph{lift} for every monitor, flag any baseline
+firing at chance, and mark an otherwise-passing verdict \textsc{vacuous}. To our
+knowledge this check is not standard practice in representation-based anomaly
+detection, though the underlying phenomenon is documented.
 \end{enumerate}
 
-\paragraph{A fourth trap, specific to this question.}
-Even a perfectly executed comparison can be vacuous. If the prediction-error
-baseline does not detect the anomalies at all --- if its detection rate sits at
-its own false-alarm rate --- then ``geometry warns earlier than prediction
-error'' is true in the same way that anything is earlier than never. It says
-nothing about whether geometry is an early warning signal. We therefore report a
-\emph{lift} for every monitor (detection rate minus held-out false-alarm rate),
-flag any baseline that fires at chance, and mark a passing verdict as
-\textsc{vacuous} when the probe that passed only beat such a baseline. We know
-of no prior work on representation-based anomaly detection that reports this
-check, and we think it should be standard.
+\paragraph{What this version contributes.}
+The registered experiment is \pending: it needs roughly one GPU-hour of credit
+that was not available, not any missing code. What we can report now is the
+apparatus and what building it taught us.
 
-\paragraph{Contributions.}
 \begin{itemize}
-\item A pre-registered, leakage-free protocol for the question ``does internal
-geometry warn before prediction error?'', with causality enforced structurally
-(monitors are streaming objects that cannot reference the future) and verified
-adversarially (inverting all frames after $t$ leaves every score unchanged).
+\item A pre-registered protocol for detection latency in frozen video world
+models, with causality enforced structurally --- monitors are streaming objects
+that cannot reference the future --- and verified adversarially by inverting
+every frame after $t$ and asserting every score is unchanged.
 \item A benchmark of four anomaly families injected at a fixed frame into a
-controlled physical scene, with matched pre-injection histories so that
-comparisons are paired at the clip level.
-\item An evaluation that reports time-to-detection as survival analysis ---
-Kaplan--Meier curves, log-rank, paired Wilcoxon, and a restricted mean
-time-to-alarm with a paired cluster bootstrap --- under two threshold regimes,
-with multiplicity control across all comparisons.
-\item A model-agnostic adapter interface: the causal loop, probes, thresholds
-and statistics are shared, so a new architecture is added in roughly twenty-five
-lines and is held to the same contract by a parameterised test suite. This is
-what makes a cross-architecture claim a comparison rather than a collection of
-incomparable pipelines.
-\item The registered result on frozen V-JEPA 2: \lgwVerdict.
+controlled physical scene, with matched pre-injection histories so comparisons
+are paired at the clip level. We characterise what each family actually
+measures, including an occlusion condition that turns out to probe object
+permanence rather than partial corruption (Section~\ref{sec:benchmark}).
+\item An evaluation that treats detection latency as survival analysis ---
+Kaplan--Meier curves, log-rank, paired Wilcoxon, and a restricted mean with a
+paired cluster bootstrap --- under two threshold regimes, with multiplicity
+control across all comparisons.
+\item A model-agnostic adapter contract, demonstrated on two architectures from
+opposite sides of the pixel/latent divide, with a parameterised test suite that
+every registered adapter must pass. Implementing the second one showed that the
+leakage trap is architecture-specific: VideoMAE leaks by a completely different
+route (Section~\ref{sec:reuse}).
+\item Five documented failure modes, each made structurally impossible, tested
+adversarially, or surfaced as a reported diagnostic.
 \end{itemize}
 
-\paragraph{On reporting a negative result.}
-The protocol commits in advance to a decision gate, and to writing up a negative
+\paragraph{On reporting a null result.}
+The protocol commits in advance to a decision gate and to writing up a null
 result if no probe clears it. We regard that commitment as the main reason to
-trust whatever the gate returns. The harness is designed to make a null answer
-as publishable, and as informative, as a positive one.
+trust whatever the gate eventually returns, and the harness is built so that a
+null answer is as publishable, and as informative, as a positive one.

@@ -126,6 +126,47 @@ def write_pending() -> None:
     print("no results found -> wrote PENDING placeholders")
 
 
+def pilot_macros(pilot_dir: str = None) -> None:
+    """Emit the exploratory pilot's clip counts, read from disk.
+
+    The pilot is still accumulating clips, so the manuscript must report what
+    is actually on disk at build time rather than a number someone typed once.
+    """
+    import numpy as np
+    d = pilot_dir or os.path.join(ROOT, "results", "pilot_cpu_128", "chunks")
+    counts = {}
+    for split in ("control_calib", "control_eval", "anomaly"):
+        n = 0
+        for f in glob.glob(os.path.join(d, split + "_*.npz")):
+            try:
+                n += int(len(np.load(f, allow_pickle=False)["clip_id"]))
+            except Exception:
+                continue
+        counts[split] = n
+    total = sum(counts.values())
+    target = 280
+    if total == 0:
+        state = "not started"
+    elif counts["control_calib"] < 70 or counts["control_eval"] < 50:
+        state = ("in progress; control clips incomplete, so no thresholds can "
+                 "be calibrated and no result can yet be computed from it")
+    elif total < target:
+        state = ("in progress; control clips complete, so a reduced analysis is "
+                 "possible")
+    else:
+        state = "complete"
+    lines = [
+        r"\newcommand{\lgwPilotCalib}{%d}" % counts["control_calib"],
+        r"\newcommand{\lgwPilotEval}{%d}" % counts["control_eval"],
+        r"\newcommand{\lgwPilotAnom}{%d}" % counts["anomaly"],
+        r"\newcommand{\lgwPilotTotal}{%d}" % total,
+        r"\newcommand{\lgwPilotTarget}{%d}" % target,
+        r"\newcommand{\lgwPilotState}{%s}" % state,
+    ]
+    _w("pilot_macros.tex", "\n".join(lines))
+    print("pilot: {} / {} clips ({})".format(total, target, state))
+
+
 def _w(name: str, body: str) -> None:
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
@@ -295,6 +336,7 @@ def main() -> None:
 
     path = find_results(args[0] if args else None)
     os.makedirs(OUT, exist_ok=True)
+    pilot_macros()
     if path is None:
         write_pending()
         return

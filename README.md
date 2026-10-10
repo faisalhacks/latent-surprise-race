@@ -1,19 +1,25 @@
-# Does latent geometry warn before prediction error?
+# Does latent geometry detect anomalies sooner than prediction error?
 
-A pre-registered, leakage-free benchmark for a specific claim about video world
-models: that the **geometry** of a frozen model's internal states registers a
-sudden physical or visual anomaly *before* the model's own **prediction error**
-does.
+When a frozen video world model meets a sudden physical or visual anomaly, two
+internal signals could flag it: the **geometry** of its representations, and the
+model's **own prediction error**. Both are known to carry physical information —
+prediction error is the published mechanism by which V-JEPA detects physics
+violations ([Garrido et al., 2025](https://arxiv.org/abs/2502.11831)), and
+embedding geometry carries physical plausibility on its own
+([Internò et al., 2026](https://arxiv.org/abs/2606.20707)). What is not known is
+which one crosses an alarm threshold **sooner**. This repository is a
+pre-registered, leakage-free protocol for measuring exactly that — a question
+that turns out to be unusually easy to decide in advance by accident.
 
-If true it matters, because prediction error is the standard online surprise
-signal for model-based control, and anything earlier buys reaction time. The
-claim is also easy to confirm by accident, which is why this repository is as
-much a protocol as an experiment.
+> **The registered experiment has not been run.** It needs ~1 GPU-hour of credit,
+> not any missing code. The paper reports the protocol, the benchmark and five
+> failure modes we found building them, with every registered number marked
+> *pending*. No placeholder or estimated values appear anywhere.
 
 ```bash
 pip install -r requirements.txt
 make test            # full suite, no GPU
-make validate        # whole pipeline on CPU, ~30 s
+make validate        # whole pipeline on CPU with a stand-in model, ~30 s
 make paper           # -> paper/main.pdf
 ```
 
@@ -21,45 +27,52 @@ make paper           # -> paper/main.pdf
 
 | phase | state |
 |---|---|
-| 1. Pre-registration frozen | done — [PREREGISTRATION.md](PREREGISTRATION.md) |
-| 2. Harness + V-JEPA 2 inference | code complete and validated; **GPU run blocked** on Modal billing, see [STATUS.md](STATUS.md) |
-| 3. Decision gate | automated in [analysis.py](src/lgw/analysis.py) |
-| 4. Expansion | gated on Phase 3 by the protocol |
-| 5. Manuscript | [paper/](paper/) compiles; numbers auto-populate from a run |
+| 1. Pre-registration frozen | ✅ **done** — [PREREGISTRATION.md](PREREGISTRATION.md), frozen before any code was written |
+| 2. Harness, benchmark, adapters, statistics | ✅ **done** — tested end-to-end; orchestration validated at full 1200-clip scale |
+| 2b. Registered 256px V-JEPA 2 run | ⏸ **parked** — needs GPU credit; see [docs/PARKED_EXPERIMENTS.md](docs/PARKED_EXPERIMENTS.md) P1 |
+| 3. Decision gate | ✅ **done** — automated in [analysis.py](src/lgw/analysis.py); no verdict yet |
+| 4a. Second architecture (VideoMAE) | ✅ adapter **done** & passing contract; ⏸ **never run** |
+| 4b. Mechanistic lag-window probe | ✅ **done**; contingent on a gate result |
+| 4c. Compression / quantization study | ⏸ **parked, draft only** — [prereg/v2_compression_DRAFT.md](prereg/v2_compression_DRAFT.md), not frozen |
+| 5. Manuscript | ✅ compiles — results pending |
+| — exploratory 128px CPU pilot | 🔄 **running**, free; *not* the registered experiment |
 
-## Three ways this comparison goes wrong, and what we do about it
+## Five ways this comparison goes wrong
 
-**The baseline can cheat.** V-JEPA 2's reference forward runs one encoder over
-the whole clip and then masks tokens into context and target — so the context
-has already attended to the frames it predicts. That makes the loss partly
-self-fulfilling and the baseline unfairly *strong*, biasing against the
+**1. The baseline can cheat.** V-JEPA 2's reference forward runs one encoder over
+the whole clip then masks tokens into context and target — so the context has
+already attended to the frames it predicts. That makes the loss partly
+self-fulfilling and the baseline unfairly *strong*, biasing *against* the
 hypothesis. We take context from a second encoder pass whose final tubelet is
 overwritten, and assert the prediction is unchanged when only the predicted
-frames change — while still responding to `f_{t-2}`, so the guarantee isn't
-vacuous.
+frames change, while still responding to `f_{t-2}`.
 
-**Thresholds can leak.** Control clips are split into disjoint calibration
-(sets thresholds) and evaluation (measures false alarms) sets. The learned
-baseline is cross-fitted within calibration so even its own threshold is honest.
+**2. Thresholds can leak.** Control clips split into disjoint calibration (sets
+thresholds) and evaluation (measures false alarms) sets; the learned baseline is
+cross-fitted within calibration so even its own threshold is honest.
 
-**The headline metric can be degenerate.** Time-to-alarm is right-censored. Once
-fewer than half the clips alarm, the median is pinned at the censoring value
-*for every monitor* and the registered test returns "no difference" whatever the
-truth. We kept the registered median as primary and registered RMTA alongside it
-*before running anything*, so a degenerate primary is visible rather than
-silently null.
+**3. The registered metric can be degenerate.** Detection latency is
+right-censored. Once fewer than half the clips alarm, the median pins at the
+censoring value *for every monitor* and the test returns "no difference"
+whatever the truth. RMDL was registered alongside it *before* running anything.
 
-**And a fourth: the verdict can be vacuous.** If a baseline's detection rate
-equals its own false-alarm rate, it fires at chance — and beating it says
-nothing about the hypothesis. Every monitor reports a **lift**; a passing
-verdict that rests on such a baseline is marked `verdict_is_vacuous`.
+**4. The verdict can be vacuous.** If a baseline's detection rate equals its own
+false-alarm rate it fires at chance, and beating it says nothing — a documented
+collapse for JEPA novelty signals
+([Pavuluri et al., 2026](https://arxiv.org/abs/2608.01336)). Every monitor
+reports a **lift**; a passing verdict resting on such a baseline is marked
+`verdict_is_vacuous`.
+
+**5. The leakage trap is architecture-specific.** VideoMAE leaks by a completely
+different route — it patchifies targets from whatever tensor it's handed. Same
+bias, different mechanism. "Is this loss causal?" must be re-asked per model.
 
 ## Causality is structural, not conventional
 
 Monitors are streaming objects fed one latent at a time, so referencing a future
-frame is not something the implementation can express. Then it is tested
-anyway: invert every frame after `t` and assert `z_t`, the loss and all three
-probes are bit-identical — including against the real V-JEPA 2 architecture.
+frame isn't something the implementation can express. Then it's tested anyway:
+invert every frame after `t` and assert `z_t`, the loss and all three probes are
+bit-identical — including against the real V-JEPA 2 architecture.
 
 ## Monitors
 
@@ -71,12 +84,22 @@ probes are bit-identical — including against the real V-JEPA 2 architecture.
 | `probe_B` | representational distance, `1 − cos(z_t, mean(z_{t−5..t−1}))` |
 | `probe_C` | covariance shift, `‖Cov(z_{t−4..t}) − Σ_base‖_F` |
 
-A probe is an **Early Warner** only if it beats **both** baselines by ≥1 frame
-of median time-to-alarm at Holm-adjusted `p < 0.01`.
+## Reproducing
+
+```bash
+python -m pytest tests -q                  # full suite, no GPU
+python scripts/run_local_validation.py 40  # whole pipeline, CPU, ~30 s
+python scripts/run_pilot_cpu.py 40 70 50   # exploratory 128px pilot, checkpointed
+python scripts/run_pilot_cpu.py --analyse-only   # analyse whatever is on disk
+make paper                                 # regenerate figures, tables, PDF
+```
+
+Full detail, including measured runtimes per resolution and the GPU commands
+for the parked run, is in [REPRODUCING.md](REPRODUCING.md).
 
 ## Using it for your own model
 
-Two methods, about twenty-five lines — see [ADAPTERS.md](ADAPTERS.md):
+Two methods, ~25 lines — see [ADAPTERS.md](ADAPTERS.md):
 
 ```python
 @register("my_model")
@@ -85,42 +108,37 @@ class MyAdapter(BaseWindowAdapter):
     def predict_final_step(self, ctx):       # -> prediction
 ```
 
-The windows are built by the caller, so an adapter cannot leak the future even
-by mistake. Every registered adapter is run through the same contract tests;
-registering one without submitting it to them fails the suite by design. That is
-what makes a cross-architecture row comparable rather than merely adjacent.
+The windows are built by the caller, so an adapter can't leak the future even by
+mistake. Every registered adapter runs through the same contract tests;
+registering one without submitting it to them fails the suite by design.
 
-## Layout
+## Key documents
 
-```
-PREREGISTRATION.md   the frozen protocol — the contract
-DEVIATIONS.md        dated log of every change, with provenance
-LIMITATIONS.md       boundary conditions, including measured ones
-STATUS.md            current blocker, costs, exact commands
-ADAPTERS.md          how to add a world model
-REPRODUCING.md       step-by-step, with measured runtimes
-paper/               manuscript; every number generated from results.json
-src/lgw/             dataset, probes, adapters, statistics, analysis, gate
-modal_app.py         Phase 2 on Modal: fan-out, precision check, analysis
-scripts/             validation, pilot, benchmarks, figure and paper builders
-tests/               causality, leakage, probe correctness, adapter contract
-```
+| file | what it is |
+|---|---|
+| [PREREGISTRATION.md](PREREGISTRATION.md) | the frozen v1 protocol — the contract |
+| [DEVIATIONS.md](DEVIATIONS.md) | dated log of every change, with provenance |
+| [docs/PARKED_EXPERIMENTS.md](docs/PARKED_EXPERIMENTS.md) | each parked run: question, cost, launch command |
+| [prereg/v2_compression_DRAFT.md](prereg/v2_compression_DRAFT.md) | compression study — **draft, not frozen** |
+| [LIMITATIONS.md](LIMITATIONS.md) | boundary conditions, including measured ones |
+| [STATUS.md](STATUS.md) | current blocker and costs |
+| [ADAPTERS.md](ADAPTERS.md) | how to add a world model |
+| [REPRODUCING.md](REPRODUCING.md) | step-by-step with measured runtimes |
 
 ## Reporting
 
 Every run writes `results.json`, a `REPORT.md` and Kaplan–Meier curves under
-**two threshold regimes** (per-frame-matched 1% FPR, the registered primary;
-clip-matched 5% FPR) and **two metric families** (median time-to-alarm, and the
-censoring-robust RMTA). All four cells are reported whatever the outcome, so a
-degenerate median cannot hide an effect and a favourable cell cannot be
-cherry-picked.
+**two threshold regimes** and **two metric families**. All four cells are
+reported whatever the outcome, so a degenerate median can't hide an effect and a
+favourable cell can't be cherry-picked.
 
 The paper regenerates entirely from that JSON. With no run analysed it compiles
-with visible `PENDING` placeholders and a DRAFT banner — a skeleton that
-silently contained invented numbers would be worse than one that is obviously
-incomplete.
+with visible `PENDING` markers — a skeleton that silently contained invented
+numbers would be worse than one that is obviously incomplete.
 
 ## License
 
 MIT (see [LICENSE](LICENSE)) — a default chosen so the harness is reusable;
-change it if it does not suit you.
+change it if it doesn't suit you. Citation metadata in
+[CITATION.cff](CITATION.cff) (author and repository URL are TODO before
+release).

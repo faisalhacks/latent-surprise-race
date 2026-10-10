@@ -5,52 +5,100 @@ Learned models that roll the world forward in a latent space underpin
 model-based control \citep{ha2018world,hafner2020dream}, and the
 joint-embedding predictive architecture (JEPA) family makes the prediction
 explicitly representational rather than pixel-level
-\citep{lecun2022path,assran2023ijepa}. V-JEPA extends this to video by
-predicting masked spatio-temporal features \citep{bardes2024vjepa}, and V-JEPA 2
-scales it to a model intended for understanding, prediction and planning
-\citep{assran2025vjepa2}. We treat V-JEPA 2 as frozen throughout: the question
-is what its representations already encode, not what they could be trained to
-encode.
+\citep{lecun2022path,assran2023ijepa}. V-JEPA extends this to video
+\citep{bardes2024vjepa} and V-JEPA 2 scales it \citep{assran2025vjepa2}. We
+treat V-JEPA 2 as frozen throughout: the question is what its representations
+already encode, not what they could be trained to encode.
 
-\paragraph{Prediction error as a surprise signal.}
-Using a model's own predictive loss as an anomaly or novelty signal is long
-established, both as an engineering device and as a model of attention
-\citep{itti2009bayesian}. In deep learning it is the backbone of much
-out-of-distribution detection \citep{hendrycks2017baseline}. Our
-$\mathcal{L}_0$ baseline is deliberately the strongest version of this idea
-available for V-JEPA 2: not a proxy, but the model's own pretraining objective,
-evaluated causally.
+\paragraph{Prediction error as the established physics signal.}
+\citet{garrido2025intuitive} show that V-JEPA acquires intuitive physics from
+self-supervised pretraining alone, and crucially that it detects physical
+violations \emph{by comparing the future against its own prediction of it} ---
+latent prediction error is the mechanism, and ablations point to it rather than
+to data or scale. That result is the reason our $\mathcal{L}_0$ baseline is the
+model's own pretraining objective rather than a proxy: the prediction-error
+signal is not a straw man, it is the published mechanism, and a protocol that
+weakened it would be testing nothing.
 
-\paragraph{Geometry of representations.}
-Comparing internal states by their geometry rather than their values is standard
-in computational neuroscience through representational similarity analysis
-\citep{kriegeskorte2008rsa}, which motivates our probe~B. Curvature of a
-representational trajectory and drift in its local covariance are the other two
-natural second-order summaries, giving probes~A and~C. We are not proposing
-these as novel statistics; the contribution is the protocol that decides whether
-they carry an early signal, under conditions where the answer could come out
-either way.
+\paragraph{Geometry of frozen embeddings already carries physical information.}
+\citet{interno2026geophys} show that physical plausibility is implicitly
+captured by geometric properties of per-frame embeddings from frozen image
+encoders, with strong violation-detection results and correspondence to human
+responses to object-permanence violations. This matters for how our
+contribution should be read. That representation geometry encodes physical
+plausibility is established; we do not claim it. The open question we address is
+\emph{temporal}: given that both the geometry and the prediction error carry
+the signal, which one crosses an alarm threshold sooner, measured under a
+protocol where neither side has been quietly advantaged. Relatedly,
+\citet{kriegeskorte2008rsa} established comparing representations by their
+geometry rather than their values, which motivates our probe~B.
 
-\paragraph{Time-to-detection and censoring.}
-Detection latency is a survival quantity: some episodes are never detected, so
-their latency is right-censored, and summarising with a plain mean or median
-over observed alarms is biased. We therefore use Kaplan--Meier estimation
+\paragraph{Occlusion, and what our occlusion condition actually tests.}
+\citet{xie2026tracking} probe exactly the regime our occlusion family lands in:
+a frozen V-JEPA 2 predictor forgets moving hidden objects within about
+$0.3$~seconds, while the encoder retains hidden-object information for far
+longer. Our occlusion condition hides the disc completely in \lgwOccFullyHidden{}
+of post-injection frames (Section~\ref{sec:benchmark}), so it is an object-permanence
+probe, not a partial-corruption probe --- and their encoder/predictor asymmetry
+predicts that a monitor reading encoder geometry and a monitor reading the
+predictor's error need not behave alike on it. We flag this as a confound to
+interpret against rather than a prediction we tested.
+
+\paragraph{Self-supervised novelty signals can collapse to chance.}
+\citet{pavuluri2026asleep} evaluate a V-JEPA-based scheme that flags clips with
+unpredictable embeddings as interesting. It appeared to work across datasets,
+but the effect was domain shift: within a single dataset performance fell to
+chance, while a lightly supervised probe on the same frozen features roughly
+doubled average precision. Their diagnosis --- the representation was adequate,
+the self-supervised objective was the limitation --- is the direct precedent for
+the guard we describe in Section~\ref{sec:protocol}. A monitor whose detection
+rate equals its own false-alarm rate is firing at chance, and a probe that
+``beats'' such a baseline has demonstrated nothing. To our knowledge this check
+is not standard in representation-based anomaly detection; our contribution is
+to make it a reported quantity and to mark an otherwise-passing verdict vacuous
+when it fails, not to have noticed the phenomenon first.
+
+\paragraph{Monitoring latents for failures, and calibrating the threshold.}
+\citet{zhang2026foresight} detect failures in long-horizon manipulation from
+action-conditioned world-model latents using only episode-level labels, and
+calibrate detection thresholds with conformal prediction. \citet{samad2026puls}
+work in the complementary direction, showing that \emph{anticipated} V-JEPA 2
+latents are more semantically separable than observed ones and reporting an
+anticipatory advantage at half a second. Both monitor world-model latents, as we
+do; both differ from this work in that neither isolates the latent signal
+against the model's own prediction error under a frozen protocol with matched
+false-alarm rates, which is the specific comparison we are trying to make
+trustworthy.
+
+\paragraph{Compression of world models.}
+\citet{fu2026quantization} study post-training quantization of DINO-WM and
+report asymmetric sensitivity across components, plus failure modes that further
+optimization does not repair. That asymmetry is the motivation for the
+compression study we have drafted but deliberately not run
+(Section~\ref{sec:future}): if encoder and predictor degrade differently, a
+geometry monitor and a prediction-error monitor should degrade differently too,
+and a per-anomaly latency measurement would show it where an aggregate score
+would not.
+
+\paragraph{Detection latency as a survival quantity.}
+How quickly a monitor fires is a time-to-event quantity, and some episodes are
+never detected, so their latency is right-censored and a plain mean or median
+over observed alarms is biased. We use Kaplan--Meier estimation
 \citep{kaplan1958nonparametric} and the log-rank test
-\citep{mantel1966evaluation}, and --- because the median is degenerate under
-heavy censoring --- a restricted mean time-to-alarm, the detection analogue of
-restricted mean survival time \citep{royston2013restricted}. Paired comparisons
-use the Wilcoxon signed-rank test \citep{wilcoxon1945individual} and a cluster
-bootstrap \citep{efron1979bootstrap}, with Holm's step-down correction across
-all comparisons \citep{holm1979simple}. Survival analysis is unusual in the
-evaluation of anomaly detectors, which more often report AUROC at a fixed
-horizon; we argue it is the right frame whenever the quantity of interest is
-\emph{how early}, not merely \emph{whether}.
+\citep{mantel1966evaluation}, and --- because a median is degenerate under heavy
+censoring --- a restricted mean detection latency, the analogue of restricted
+mean survival time \citep{royston2013restricted}. Paired comparisons use the
+Wilcoxon signed-rank test \citep{wilcoxon1945individual} and a cluster bootstrap
+\citep{efron1979bootstrap}, with Holm's correction \citep{holm1979simple}.
+Survival analysis is uncommon in anomaly-detector evaluation, which more often
+reports AUROC at a fixed horizon; we argue it is the right frame whenever the
+quantity of interest is \emph{how quickly}, not merely \emph{whether}.
 
 \paragraph{Pre-registration in machine learning.}
 Freezing hypotheses, metrics and decision rules before observing data is routine
-in clinical trials and rare in machine learning, where the same data typically
-serves exploration and confirmation. We adopt it here because the hypothesis is
-attractive, the design space is large, and the number of defensible-looking
-analysis choices is more than sufficient to manufacture a positive result by
-accident. Every departure from the frozen protocol is logged with its date and
-provenance (Appendix~\ref{app:prereg}).
+in clinical trials and rare here, where the same data typically serves
+exploration and confirmation. We adopt it because the hypothesis is attractive,
+the design space is large, and the number of defensible-looking analysis choices
+is more than sufficient to manufacture a positive result by accident. Every
+departure from the frozen protocol is logged with its date and provenance
+(Appendix~\ref{app:prereg}).

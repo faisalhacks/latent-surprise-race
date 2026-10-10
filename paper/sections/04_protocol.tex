@@ -9,7 +9,7 @@ be matched is their false-alarm behaviour. For each monitor independently, the
 threshold is the $99$th percentile of that monitor's scores pooled over the
 \emph{control-calibration} clips and the evaluation frames. Every monitor
 therefore raises false alarms on $1\%$ of control frames by construction, and
-differences in time-to-alarm are differences in sensitivity, not in scale.
+differences in detection latency are differences in sensitivity, not in scale.
 
 Control clips are split into disjoint calibration ($n=\lgwNCalib$) and
 evaluation ($n=\lgwNEval$) sets. Thresholds are set on the former and false
@@ -23,11 +23,11 @@ false-alarm rate on calibration controls is $5\%$. This was fixed before any
 inference run, and both regimes are reported unconditionally, so neither can be
 selected after the fact.
 
-\subsection{Time-to-alarm as a survival quantity}
+\subsection{Detection latency as a survival quantity}
 
 An alarm fires at the first evaluation frame whose score exceeds the threshold.
 With injection at $t^\star = 15$ and an evaluation window of frames
-$15..29$, time-to-alarm is $\dt = t_{\text{alarm}} - 15 \in \{0,\dots,14\}$. A
+$15..29$, detection latency is $\dt = t_{\text{alarm}} - 15 \in \{0,\dots,14\}$. A
 clip that never alarms is \textbf{right-censored} at $14$: its latency is not
 $14$, it is unobserved and at least $14$.
 
@@ -36,7 +36,7 @@ Once fewer than half the clips alarm, the median $\dt$ equals the censoring
 value for \emph{every} monitor, and the pre-registered comparison returns ``no
 difference'' no matter how large the true effect. We registered the median as
 primary because it was specified in advance, and registered the
-\textbf{restricted mean time-to-alarm}
+\textbf{restricted mean detection latency}
 \begin{equation}
 \RMTA \;=\; \mathbb{E}\bigl[\min(\dt, 14)\bigr] \;=\; \sum_{u=0}^{13} \widehat S(u),
 \end{equation}
@@ -54,17 +54,17 @@ hoc.
 \item \textbf{Censoring-aware.} Log-rank on the Kaplan--Meier curves. Both arms
 come from the same clips, violating its independence assumption, so it is
 reported as corroborative only.
-\item \textbf{Effect size.} Paired cluster bootstrap on the RMTA difference
+\item \textbf{Effect size.} Paired cluster bootstrap on the \RMTA{} difference
 ($\lgwNBoot$ resamples, the same resample applied to both monitors so that
 pairing is preserved), giving a confidence interval in frames.
 \item \textbf{Multiplicity.} Holm's step-down correction across all six
 comparisons ($3$ probes $\times$ $2$ baselines), separately for the median and
-RMTA families.
+\RMTA{} families.
 \end{itemize}
 
 \subsection{The decision gate}
 
-A probe is an \textbf{Early Warner} iff, against \emph{both} baselines, its
+A probe counts as a \textbf{faster detector} iff, against \emph{both} baselines, its
 median $\dt$ is at least one frame lower \emph{and} the Holm-adjusted one-sided
 $p$ is below $0.01$. If no probe qualifies, the protocol terminates the
 expansion track and the result is written up as a negative one. The gate is
@@ -102,8 +102,8 @@ being believed when it should not be.
 \paragraph{Lift.} For every monitor we report
 $\text{lift} = \text{detection rate} - \text{held-out clip false-alarm rate}$.
 A monitor with lift near zero is firing at chance. If a \emph{baseline} fires at
-chance, then beating it carries no information about H1 --- a probe cannot be
-shown to warn \emph{earlier} than a signal that never warns --- and a passing
+chance, then beating it carries no information about H1 --- a probe cannot be shown to fire
+\emph{sooner} than a signal that never fires --- and a passing
 verdict is reported as \textsc{vacuous}. This check is not a hypothesis test and
 does not alter any threshold or statistic; it only makes an existing failure
 mode visible.

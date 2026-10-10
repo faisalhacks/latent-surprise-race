@@ -1,26 +1,43 @@
 \section{Conclusion}
 
-We asked whether the internal geometry of a frozen video world model signals a
-sudden physical or visual disturbance before the model's own prediction error
-does, and we built the experiment so that the answer could come out either way.
-On the registered protocol the gate returns \lgwVerdict.
+We set out to measure whether the internal geometry of a frozen video world
+model crosses an alarm threshold sooner than the model's own prediction error,
+and built the experiment so the answer could come out either way. That
+measurement is \pending: it needs about one GPU-hour of credit, not any missing
+code. We report the apparatus, and what building it revealed.
 
-The methodological point outlasts the specific answer. A comparison between an
-internal signal and an output error is unusually easy to decide in advance
-without noticing: by letting the baseline's context attend to the frames it
-predicts, by calibrating thresholds on the data they are scored against, by
-summarising a censored latency with a statistic that is constant under
-censoring, or by beating a baseline that never fires. We made the first
+The methodological point stands independently of the eventual verdict. A
+comparison between an internal signal and an output error is unusually easy to
+settle in advance without noticing: by letting the baseline's context attend to
+the frames it predicts; by calibrating thresholds on the data they are scored
+against; by summarising a censored latency with a statistic that is constant
+under censoring; or by beating a baseline that never fires. We made the first
 structurally impossible and tested it adversarially, the second impossible by
 construction, the third visible through a registered secondary, and the fourth
 visible through a lift check that marks an otherwise-passing verdict vacuous.
 
-None of these guards is sophisticated. What they have in common is that
-omitting any one of them yields a cleaner-looking result, which is why we think
-they belong in the protocol rather than in the discussion. We release the
-harness as a benchmark that another architecture joins in about twenty-five
-lines and is then held to the same contract automatically, so that the next
-claim of this shape can be checked rather than argued.
+Two further findings came from building rather than from measuring. Our
+occlusion condition, specified as a square covering $30\%$ of the frame, in
+practice hides the disc entirely in \lgwOccFullyHidden{} of post-injection
+frames --- so it probes object permanence, a regime in which the encoder and
+predictor of V-JEPA 2 are known to dissociate \citep{xie2026tracking}, and
+describing it as partial occlusion would have misstated what the numbers mean.
+And implementing a second architecture showed that the leakage trap is
+architecture-specific: VideoMAE builds its targets by patchifying whatever
+tensor it is handed, reaching the same bias by an entirely different route.
+Whether a loss is causal has to be re-asked, and re-tested, per architecture; it
+is not a property a harness can confer.
+
+None of these guards is sophisticated. What they share is that omitting any one
+of them yields a cleaner-looking result, which is why we think they belong in
+the protocol rather than in the discussion. To our knowledge the lift check in
+particular is not standard in representation-based anomaly detection, though the
+collapse it guards against is documented \citep{pavuluri2026asleep}.
+
+We release the harness as a benchmark that another architecture joins in about
+twenty-five lines and is then held to the same contract automatically, so that
+the next claim of this shape can be checked rather than argued --- including
+ours, once the run happens.
 
 \section*{Reproducibility statement}
 
@@ -30,6 +47,6 @@ the evidence that motivated it. The dataset is generated deterministically from
 a single seed, so none is distributed. Frozen constants are pinned by a test
 that fails if edited. The causality and leakage guarantees are tested, not
 asserted. Every table, figure and numeric sentence in this paper is generated
-from a run's result JSON by a script in the repository; if no run has been
-analysed, the manuscript compiles with visible placeholders rather than
-plausible values.
+from a run's result JSON by a script in the repository; with no run analysed,
+the manuscript compiles with visible \textsc{pending} markers rather than
+plausible values, which is why no registered number appears above.

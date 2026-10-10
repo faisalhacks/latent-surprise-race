@@ -1,0 +1,62 @@
+\section{Future work}
+\label{sec:future}
+
+\paragraph{Run the registered experiment.}
+The immediate next step is the one this paper is missing: execute the frozen
+protocol at $256$~px and report the verdict, whichever way it falls. The
+estimated cost is about one GPU-hour. Everything needed is written and tested.
+
+\paragraph{Compression and detection latency (drafted, deliberately not run).}
+The natural follow-up becomes available only once a monitoring harness exists.
+\citet{fu2026quantization} report that post-training quantization of a world
+model produces \emph{asymmetric} sensitivity across components, and failure
+modes that further optimization does not repair. A mean-performance number hides
+that; a per-anomaly-family detection-latency measurement should not.
+
+We have drafted a second study asking whether compression changes \emph{which}
+anomalies a model still catches and \emph{how fast}, rather than degrading it
+uniformly. Its shape:
+
+\begin{itemize}
+\item Six precisions (fp32, bf16, fp16, int8 weight-only, W8A8, 4-bit
+weight-only) crossed with three placements (encoder only, predictor only,
+both). Placement is the factor that tests the asymmetry claim directly: under
+encoder-only compression the latents the probes consume are degraded while the
+prediction head is intact, and vice versa.
+\item One primary contrast per anomaly family, Holm-corrected across the four,
+with every other cell exploratory and labelled as such.
+\item \textbf{Equivalence testing}, not null-hypothesis testing. The interesting
+claim is usually that compression does \emph{not} hurt, which is an equivalence
+claim and cannot be supported by failing to reject a difference. The draft
+specifies TOST on the latency difference --- and leaves the equivalence margins
+blank, as an explicit TODO for the author to set and justify before freezing,
+because choosing a margin after seeing the effect is the easiest way to
+manufacture an equivalence result.
+\item A fresh seed for the confirmatory clips, so that no clip used to develop
+the harness appears in the confirmatory set, and per-cell threshold calibration,
+so that a shift in score scale is not confounded with a change in sensitivity.
+\item A second-GPU arm. Quantization kernels, tensor-core paths and accumulation
+order differ across hardware, so a compression effect that does not reproduce on
+two GPUs is a kernel artefact rather than a property of the model.
+\item Two exploratory analyses: \emph{blind spots} --- whether misses
+concentrate in one anomaly family rather than thinning uniformly --- and
+\emph{motion energy}, testing whether compression costs concentrate in
+low-motion clips where there is least signal to work with. Both target the same
+idea, that aggregate accuracy can hold while the distribution of failures
+shifts.
+\end{itemize}
+
+The draft is marked \textsc{draft, not frozen} and no data may be collected
+under it until its margins are set and it is frozen in its own commit. It does
+not amend the v1 pre-registration, which remains in force untouched. We record
+it here so that its existence and date are on the record and it cannot later be
+presented as having been registered earlier than it was.
+
+\paragraph{Other directions.}
+A physics-simulator domain with contact and articulation would test whether
+anything here survives outside synthetic discs. A gradual-onset benchmark would
+let the anticipation question be asked properly, rather than the latency
+question we can currently answer. And the per-clip standardisation issue raised
+in Section~\ref{sec:limitations} deserves a clean treatment: a probe family
+defined to be invariant to per-clip offsets from the start, rather than one
+patched after the fact.

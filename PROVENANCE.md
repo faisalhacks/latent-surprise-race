@@ -19,8 +19,18 @@
 | Cost | 7,554 GPU-seconds (2.10 GPU-hours), 963 s wall |
 | Protocol | frozen v1, unmodified |
 
-## Account authorisation
-Modal profile riyann00b: [TODO: Faisal to fill — whose account, how accessed, whether authorised]
+## Modal account — status: UNRESOLVED for v2
+
+| Field | Value |
+|---|---|
+| Profile name | riyann00b |
+| Account owner | A friend, unnamed by mutual agreement |
+| Relationship | Personal contact, not a lab account |
+| Consent given | Verbal, one-time use for this run |
+| Access terms | Single run only; not authorised for v2 |
+| Payment method | Friend's payment method on file; author's accounts were payment-gated |
+| Authorised for v2 | NO — flagged as unresolved |
+| Reviewer note | Permission is not the same as approved provenance. An acceptable accountable compute route must be agreed before v2 runs. |
 
 ## Verdict status
 Verdict was read by the automated pipeline during launch. Whether it

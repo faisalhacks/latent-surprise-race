@@ -131,3 +131,11 @@ freezing and are documented in PREREGISTRATION.md Sec. 0: the
 constant-velocity/gravity-inversion contradiction, the unobservability of a
 collision-only friction change, and the under-determination of a per-frame
 latent state under V-JEPA 2's 2-frame tubelet.
+
+## Modal account provenance (2026-10-12)
+
+| date | topic | entry |
+|---|---|---|
+| 2026-10-12 | Modal account | The registered run used profile riyann00b, owned by a friend who consented to one-time verbal use. The author's own accounts were payment-gated. Per reviewer ruling, permission is not the same as approved provenance; this is flagged as unresolved for v2. An accountable compute route must be agreed before any v2 run. |
+
+See `PROVENANCE.md` for the full account record.

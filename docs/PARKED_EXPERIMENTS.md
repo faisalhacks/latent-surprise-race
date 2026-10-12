@@ -2,7 +2,7 @@
 
 **Status as of 2026-10-10: P1 and P2 are DONE. P3, P4 and P5 remain PARKED.**
 
-P3 (compression) additionally requires `prereg/v2_compression_DRAFT.md` to be
+P3 (compression) additionally requires `prereg/v2_PROPOSED.md` to be
 completed with the owner's equivalence margins and frozen in its own commit
 before any data may be collected under it. Nothing in P3-P5 runs until the
 repository owner says so.
@@ -97,7 +97,7 @@ error below ~1% with Spearman > 0.99. Default is fp32.
 model detects and *how fast*, rather than just degrading it uniformly? And is
 the encoder or the predictor the sensitive component?
 
-**Design.** See `prereg/v2_compression_DRAFT.md` — **draft, not frozen**.
+**Design.** See `prereg/v2_PROPOSED.md` — **draft, not frozen**.
 Six precisions x three placements, one primary contrast per anomaly family, a
 fresh seed for the confirmatory clips, and a second-GPU arm.
 

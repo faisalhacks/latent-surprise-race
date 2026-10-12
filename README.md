@@ -29,11 +29,11 @@ make paper           # -> paper/main.pdf
 |---|---|
 | 1. Pre-registration frozen | ✅ **done** — [PREREGISTRATION.md](PREREGISTRATION.md), frozen before any code was written |
 | 2. Harness, benchmark, adapters, statistics | ✅ **done** — tested end-to-end; orchestration validated at full 1200-clip scale |
-| 2b. Registered 256px V-JEPA 2 run | ⏸ **parked** — needs GPU credit; see [docs/PARKED_EXPERIMENTS.md](docs/PARKED_EXPERIMENTS.md) P1 |
+| 2b. Registered 256px V-JEPA 2 run | ⚠️ **exploratory** — v1 ran but is parked as exploratory per reviewer ruling; v2 proposed, not frozen. See [docs/V1_EXPLORATORY.md](docs/V1_EXPLORATORY.md) and [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md) |
 | 3. Decision gate | ✅ **done** — automated in [analysis.py](src/lgw/analysis.py); no verdict yet |
 | 4a. Second architecture (VideoMAE) | ✅ adapter **done** & passing contract; ⏸ **never run** |
 | 4b. Mechanistic lag-window probe | ✅ **done**; contingent on a gate result |
-| 4c. Compression / quantization study | ⏸ **parked, draft only** — [prereg/v2_compression_DRAFT.md](prereg/v2_compression_DRAFT.md), not frozen |
+| 4c. Compression / quantization study | ⏸ **parked, draft only** — [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md), not frozen |
 | 5. Manuscript | ✅ compiles — results pending |
 | — exploratory 128px CPU pilot | 🔄 **running**, free; *not* the registered experiment |
 
@@ -119,7 +119,7 @@ registering one without submitting it to them fails the suite by design.
 | [PREREGISTRATION.md](PREREGISTRATION.md) | the frozen v1 protocol — the contract |
 | [DEVIATIONS.md](DEVIATIONS.md) | dated log of every change, with provenance |
 | [docs/PARKED_EXPERIMENTS.md](docs/PARKED_EXPERIMENTS.md) | each parked run: question, cost, launch command |
-| [prereg/v2_compression_DRAFT.md](prereg/v2_compression_DRAFT.md) | compression study — **draft, not frozen** |
+| [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md) | compression study — **draft, not frozen** |
 | [LIMITATIONS.md](LIMITATIONS.md) | boundary conditions, including measured ones |
 | [STATUS.md](STATUS.md) | current blocker and costs |
 | [ADAPTERS.md](ADAPTERS.md) | how to add a world model |

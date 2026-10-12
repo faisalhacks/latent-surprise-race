@@ -30,7 +30,7 @@ they are the checks that will matter then.
 | B2 | Is every post-freeze change dated and justified? | `DEVIATIONS.md` | An undocumented change, or a change dated vaguely. |
 | B3 | Were the secondary metrics added before or after real inference? | `DEVIATIONS.md`, rows dated 2026-10-06 | A secondary metric introduced after an outcome was known. The log must say which. |
 | B4 | Was the test tail (one- vs two-sided) fixed in advance? | `DEVIATIONS.md`, Section 3 row | A tail chosen post hoc. Both tails are reported in every table so the choice cannot be hidden. |
-| B5 | Were equivalence margins set before or after seeing effects? | `prereg/v2_compression_DRAFT.md` §3 | Margins filled in. They are deliberately left TODO; a filled-in margin with no justification is the failure mode. |
+| B5 | Were equivalence margins set before or after seeing effects? | `prereg/v2_PROPOSED.md` §3 | Margins filled in. They are deliberately left TODO; a filled-in margin with no justification is the failure mode. |
 | B6 | Can protocol constants drift silently? | `pytest tests/test_config_frozen.py -q` | Passing after an edit. The test pins every constant. |
 | B7 | Is the confirmatory set distinct from the development set? | v2 draft §4 specifies a fresh seed | Reusing the seed the harness was debugged on for confirmatory clips. |
 

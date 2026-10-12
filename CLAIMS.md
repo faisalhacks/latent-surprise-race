@@ -14,9 +14,17 @@ Status key: **SUPPORTED** (evidence exists and is reproducible) ·
 
 | claim | status | evidence |
 |---|---|---|
-| Representation geometry crosses an alarm threshold sooner than the model's own prediction error in a frozen video world model. | **UNSUPPORTED / PENDING** | **None.** The registered experiment has not been run. No detection latency, no gate verdict, no survival curve, no $p$-value exists for this claim. It is open. |
+| [EXPLORATORY — v1 parked per reviewer ruling 2026-10-10] Representation geometry crosses an alarm threshold sooner than the model's own prediction error in a frozen video world model. | **NOT CONFIRMATORY** | The v1 run executed on 2026-10-10 (tag `phase2-20261010-174237`) and produced a gate verdict. Per the reviewer ruling of 2026-10-10, v1 is classified **exploratory**, not confirmatory or preregistered evidence, because the frozen analysis executed automatically with the inference launch before reviewer sign-off. The artifacts stand; their evidential status does not. See `docs/V1_EXPLORATORY.md` and `PROVENANCE.md`. |
 
-Nothing in this repository should be read as evidence for or against it.
+Nothing in this repository should be read as *confirmatory* evidence for or
+against it. The v2 protocol (`prereg/v2_PROPOSED.md`) is the confirmatory study
+and is not yet frozen.
+
+> **Note on the age of this file.** The claim rows below were written before the
+> v1 run of 2026-10-10 and describe the state of evidence at that time. Rows
+> whose evidence column says an experiment "has not been run" refer to that
+> earlier state. They are left as written rather than revised, per the ruling's
+> instruction not to alter claims; only exploratory labels have been added.
 
 ---
 

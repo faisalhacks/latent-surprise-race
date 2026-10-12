@@ -4,9 +4,10 @@ A compact set of checks for the three ways a result like this goes wrong:
 **leakage**, **post-outcome tuning**, and **unreported failures**. Each item
 says what to run or read, and what a bad answer looks like.
 
-This repository is in a **pre-result** state, so most outcome-side items are
-marked N/A until the registered run executes. They are listed anyway, because
-they are the checks that will matter then.
+This repository is **post-run**: v1 executed on 2026-10-10 and is parked as
+exploratory per reviewer ruling 2026-10-12. Outcome-side items are therefore
+live, but the evidence they bear on is exploratory rather than confirmatory.
+See `docs/V1_EXPLORATORY.md`.
 
 ---
 
@@ -49,14 +50,14 @@ they are the checks that will matter then.
 | C9 | Is the exploratory pilot presented as the registered experiment? | `exploratory_pilot_128px/README.md`; paper §Results | Pilot numbers in a results table, or pooled with registered ones. |
 | C10 | Are known risks disclosed? | `LIMITATIONS.md` | Omitting the $\pm2\%$ $\mathcal{L}_0$ range or the per-clip offsets in probes A and C. |
 
-## D. Pre-result specific (this snapshot)
+## D. Post-run specific (this snapshot)
 
 | # | check | expected |
 |---|---|---|
-| D1 | Has the registered experiment run? | **No.** `FREEZE.json: results_status.registered_experiment_run = false` |
-| D2 | Are any registered outcome numbers present anywhere? | **No.** Every one is marked pending. |
-| D3 | Is the headline hypothesis claimed? | **No.** `CLAIMS.md` marks it UNSUPPORTED/PENDING. |
-| D4 | Has any pilot outcome been analysed? | **No.** The pilot's control splits are incomplete, so no threshold exists and no latency is defined. |
+| D1 | Has the registered experiment run? | **Yes, ran 2026-10-10** (tag `phase2-20261010-174237`). v1 is exploratory, not confirmatory. |
+| D2 | Are registered outcome numbers present? | **Yes**, in the tables and on disk. They are reported as **exploratory** evidence per the ruling. |
+| D3 | Is the headline hypothesis claimed as confirmatory? | **No.** `CLAIMS.md` marks it NOT CONFIRMATORY and labels it exploratory. |
+| D4 | Has any pilot outcome been analysed? | **No.** The 128px CPU pilot was stopped on 2026-10-10 with its control splits incomplete, so no threshold exists and no latency is defined. |
 
 ## Fastest path to an opinion
 
@@ -67,3 +68,9 @@ cat CLAIMS.md                             # what is and is not claimed
 cat DEVIATIONS.md                         # B2-B4
 diff --strip-trailing-cr <(git show 033ee1a:PREREGISTRATION.md) PREREGISTRATION.md   # B1
 ```
+
+---
+
+Note: `FREEZE.json` field `registered_experiment_run` was false at freeze time
+(correct); superseded by the run on 2026-10-10. The frozen file is not
+modified.

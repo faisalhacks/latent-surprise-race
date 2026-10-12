@@ -11,10 +11,13 @@ which one crosses an alarm threshold **sooner**. This repository is a
 pre-registered, leakage-free protocol for measuring exactly that — a question
 that turns out to be unusually easy to decide in advance by accident.
 
-> **The registered experiment has not been run.** It needs ~1 GPU-hour of credit,
-> not any missing code. The paper reports the protocol, the benchmark and five
-> failure modes we found building them, with every registered number marked
-> *pending*. No placeholder or estimated values appear anywhere.
+> **The registered experiment ran 2026-10-10; it is parked as exploratory per
+> reviewer ruling 2026-10-12** (see [docs/V1_EXPLORATORY.md](docs/V1_EXPLORATORY.md)).
+> The frozen analysis executed automatically with the inference launch, before
+> independent review, so v1 cannot stand as confirmatory evidence. Its results
+> are preserved and reportable as exploratory. A confirmatory v2 protocol with
+> decoupled inference and analysis is proposed in
+> [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md), not frozen.
 
 ```bash
 pip install -r requirements.txt
@@ -30,12 +33,12 @@ make paper           # -> paper/main.pdf
 | 1. Pre-registration frozen | ✅ **done** — [PREREGISTRATION.md](PREREGISTRATION.md), frozen before any code was written |
 | 2. Harness, benchmark, adapters, statistics | ✅ **done** — tested end-to-end; orchestration validated at full 1200-clip scale |
 | 2b. Registered 256px V-JEPA 2 run | ⚠️ **exploratory** — v1 ran but is parked as exploratory per reviewer ruling; v2 proposed, not frozen. See [docs/V1_EXPLORATORY.md](docs/V1_EXPLORATORY.md) and [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md) |
-| 3. Decision gate | ✅ **done** — automated in [analysis.py](src/lgw/analysis.py); no verdict yet |
+| 3. Decision gate | ✅ **done** — automated in [analysis.py](src/lgw/analysis.py); verdict produced by the automated pipeline; v1 classified as exploratory |
 | 4a. Second architecture (VideoMAE) | ✅ adapter **done** & passing contract; ⏸ **never run** |
 | 4b. Mechanistic lag-window probe | ✅ **done**; contingent on a gate result |
 | 4c. Compression / quantization study | ⏸ **parked, draft only** — [prereg/v2_PROPOSED.md](prereg/v2_PROPOSED.md), not frozen |
-| 5. Manuscript | ✅ compiles — results pending |
-| — exploratory 128px CPU pilot | 🔄 **running**, free; *not* the registered experiment |
+| 5. Manuscript | compiles; v1 results on disk, classified as exploratory |
+| - exploratory 128px CPU pilot | stopped 2026-10-10; *not* the registered experiment, no outcome computed |
 
 ## Five ways this comparison goes wrong
 
@@ -140,5 +143,4 @@ numbers would be worse than one that is obviously incomplete.
 
 MIT (see [LICENSE](LICENSE)) — a default chosen so the harness is reusable;
 change it if it doesn't suit you. Citation metadata in
-[CITATION.cff](CITATION.cff) (author and repository URL are TODO before
-release).
+[CITATION.cff](CITATION.cff).
